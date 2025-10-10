@@ -1,15 +1,18 @@
 package com.dagimg.expensms.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,11 +61,8 @@ fun HomeScreen(
     val pagerState = rememberPagerState(pageCount = { allCards.size })
 
     LazyColumn(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(horizontal = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xl),
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
     ) {
         item {
             Spacer(modifier = Modifier.height(Spacing.lg))
@@ -73,10 +73,11 @@ fun HomeScreen(
             HomeHeader(
                 userName = userName,
                 currentDate = currentDate,
+                modifier = Modifier.padding(horizontal = Spacing.lg),
             )
         }
 
-        // Balance Cards Section
+        // Balance Cards Section (no horizontal padding - cards handle it)
         item {
             BalanceCardsSection(
                 cards = allCards,
@@ -88,6 +89,7 @@ fun HomeScreen(
         item {
             RecentTransactionsHeader(
                 onSeeAllClick = onSeeAllClick,
+                modifier = Modifier.padding(horizontal = Spacing.lg),
             )
         }
 
@@ -97,6 +99,7 @@ fun HomeScreen(
                 transaction = transaction,
                 onTransactionClick = onTransactionClick,
                 onLinkClick = onLinkClick,
+                modifier = Modifier.padding(horizontal = Spacing.lg),
             )
         }
 
@@ -110,8 +113,10 @@ fun HomeScreen(
 private fun HomeHeader(
     userName: String,
     currentDate: String,
+    modifier: Modifier = Modifier,
 ) {
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         Text(
@@ -171,36 +176,41 @@ private fun PagerIndicators(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(pageCount) { page ->
+            val isActive = page == currentPage
             Box(
                 modifier =
                     Modifier
-                        .size(if (page == currentPage) 8.dp else 6.dp)
-                        .padding(horizontal = 2.dp),
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = MaterialTheme.shapes.small,
-                    color =
-                        if (page == currentPage) {
-                            LightColors.Foreground
-                        } else {
-                            LightColors.MutedForeground.copy(alpha = 0.3f)
-                        },
-                ) {}
-            }
+                        .padding(horizontal = 4.dp)
+                        .width(if (isActive) 24.dp else 8.dp)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(
+                            if (isActive) {
+                                LightColors.Foreground
+                            } else {
+                                LightColors.MutedForeground.copy(alpha = 0.25f)
+                            },
+                        ),
+            )
         }
     }
 }
 
 @Composable
-private fun RecentTransactionsHeader(onSeeAllClick: () -> Unit) {
+private fun RecentTransactionsHeader(
+    onSeeAllClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -3,11 +3,14 @@ package com.dagimg.expensms.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,78 +29,97 @@ fun BalanceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-    Card(
-        onClick = onClick,
+    val accentColor =
+        if (isTotal) {
+            BankColors.TotalBalance
+        } else {
+            Color(android.graphics.Color.parseColor(bank.colorHex))
+        }
+
+    Box(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(140.dp),
-        shape = Shapes.extraLarge,
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (isTotal) {
-                        Color(0xFF10B981).copy(alpha = 0.1f) // Light green background for total
-                    } else {
-                        LightColors.Card
-                    },
-            ),
-        elevation =
-            CardDefaults.cardElevation(
-                defaultElevation = 2.dp,
-                pressedElevation = 4.dp,
-            ),
+                .height(180.dp)
+                .padding(horizontal = 24.dp)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    spotColor = Color.Black.copy(alpha = 0.15f),
+                    ambientColor = Color.Black.copy(alpha = 0.1f),
+                ).clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush =
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    accentColor.copy(alpha = 0.9f),
+                                    accentColor.copy(alpha = 1f),
+                                ),
+                        ),
+                ),
     ) {
-        Box(
+        Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(Spacing.lg),
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Color accent indicator (top right)
-            Box(
-                modifier =
-                    Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isTotal) {
-                                BankColors.TotalBalance
-                            } else {
-                                Color(android.graphics.Color.parseColor(bank.colorHex))
-                            },
-                        ).align(Alignment.TopEnd),
-            )
-
-            // Content
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxSize(),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Label
                 Text(
                     text = if (isTotal) "Total Balance" else bank.displayName,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LightColors.MutedForeground,
+                    color = Color.White.copy(alpha = 0.9f),
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
                 )
 
-                // Amount
+                Box(
+                    modifier =
+                        Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.9f)),
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = formatCurrency(bank.currentBalance),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontSize = 36.sp,
+                letterSpacing = (-0.5).sp,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = formatCurrency(bank.currentBalance),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = LightColors.Foreground,
-                    fontSize = 24.sp,
+                    text = if (isTotal) "All Accounts" else "Account Balance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 12.sp,
                 )
 
-                // Bank name (only for individual bank cards)
                 if (!isTotal) {
                     Text(
-                        text = bank.displayName,
+                        text = "****${bank.id}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = LightColors.MutedForeground,
-                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp,
                     )
                 }
             }
@@ -111,69 +133,77 @@ fun TotalBalanceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-    Card(
-        onClick = onClick,
+    Box(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(140.dp),
-        shape = Shapes.extraLarge,
-        colors =
-            CardDefaults.cardColors(
-                containerColor = BankColors.TotalBalance.copy(alpha = 0.1f),
-            ),
-        elevation =
-            CardDefaults.cardElevation(
-                defaultElevation = 2.dp,
-                pressedElevation = 4.dp,
-            ),
+                .height(180.dp)
+                .padding(horizontal = 24.dp)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    spotColor = Color.Black.copy(alpha = 0.15f),
+                    ambientColor = Color.Black.copy(alpha = 0.1f),
+                ).clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush =
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    BankColors.TotalBalance.copy(alpha = 0.9f),
+                                    BankColors.TotalBalance.copy(alpha = 1f),
+                                ),
+                        ),
+                ),
     ) {
-        Box(
+        Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(Spacing.lg),
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Green accent indicator (top right)
-            Box(
-                modifier =
-                    Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(BankColors.TotalBalance)
-                        .align(Alignment.TopEnd),
-            )
-
-            // Content
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxSize(),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Label
                 Text(
                     text = "Total Balance",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LightColors.MutedForeground,
+                    color = Color.White.copy(alpha = 0.9f),
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
                 )
 
-                // Amount
-                Text(
-                    text = formatCurrency(totalBalance),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = LightColors.Foreground,
-                    fontSize = 28.sp,
-                )
-
-                // Subtitle
-                Text(
-                    text = "Total Balance",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LightColors.MutedForeground,
-                    fontSize = 12.sp,
+                Box(
+                    modifier =
+                        Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.9f)),
                 )
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = formatCurrency(totalBalance),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontSize = 36.sp,
+                letterSpacing = (-0.5).sp,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "All Accounts",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 12.sp,
+            )
         }
     }
 }
