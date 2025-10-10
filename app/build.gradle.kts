@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.biometric)
 
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))

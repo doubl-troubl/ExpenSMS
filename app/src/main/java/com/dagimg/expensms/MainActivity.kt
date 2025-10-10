@@ -3,13 +3,13 @@ package com.dagimg.expensms
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -24,7 +24,7 @@ import com.dagimg.expensms.ui.screens.TransactionsScreen
 import com.dagimg.expensms.ui.theme.AppTypography
 import com.dagimg.expensms.ui.theme.LightColors
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ComponentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
+private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
     val navController = rememberNavController()
 
     MaterialTheme(

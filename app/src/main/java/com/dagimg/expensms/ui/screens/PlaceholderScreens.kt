@@ -39,31 +39,4 @@ fun TransactionsScreen(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(Spacing.lg),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = LightColors.Foreground,
-            fontSize = 24.sp,
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.md))
-
-        Text(
-            text = "Coming Soon...",
-            style = MaterialTheme.typography.bodyLarge,
-            color = LightColors.MutedForeground,
-            fontSize = 16.sp,
-        )
-    }
-}
+// SettingsScreen moved to SettingsScreen.kt
