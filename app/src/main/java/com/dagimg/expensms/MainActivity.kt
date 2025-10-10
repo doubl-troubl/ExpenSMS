@@ -8,8 +8,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dagimg.expensms.data.biometric.BiometricAuthManager
+import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
+import kotlinx.coroutines.launch
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -49,6 +55,63 @@ class MainActivity : FragmentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val settingsViewModel: SettingsViewModel = viewModel {
+        SettingsViewModel(context.applicationContext as android.app.Application)
+    }
+    val biometricManager = remember { BiometricAuthManager(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Check if biometric authentication is required
+    val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
+    var isAuthenticated by remember { mutableStateOf(false) }
+    var authenticationChecked by remember { mutableStateOf(false) }
+
+    // Check authentication on app start and when biometric setting changes
+    LaunchedEffect(biometricEnabled) {
+        if (biometricEnabled && biometricManager.canAuthenticate()) {
+            val authenticated = biometricManager.authenticate(this@ExpenSMSApp)
+            isAuthenticated = authenticated
+            if (!authenticated) {
+                // Authentication failed or was cancelled, close the app
+                finish()
+                return@LaunchedEffect
+            }
+        } else {
+            isAuthenticated = true // No biometric required
+        }
+        authenticationChecked = true
+    }
+
+    // Show loading screen while checking authentication
+    if (!authenticationChecked) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CircularProgressIndicator()
+                Text("Checking authentication...")
+            }
+        }
+        return
+    }
+
+    // If not authenticated and biometric is enabled, this shouldn't happen
+    // because we finish() the activity above, but just in case
+    if (biometricEnabled && !isAuthenticated) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Authentication required")
+        }
+        return
+    }
+
     val navController = rememberNavController()
 
     MaterialTheme(
