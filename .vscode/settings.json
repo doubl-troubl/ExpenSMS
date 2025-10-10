@@ -1,0 +1,9 @@
+{
+    "android-dev-ext.codeCompletionLibraries": [
+        "androidx.activity:activity",
+        "androidx.core:core",
+        "androidx.fragment:fragment",
+        "androidx.navigation:navigation-fragment",
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic"
+}
