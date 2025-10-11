@@ -2,10 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- SMS Permissions -->
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <!-- SMS Permission - only needed for historical data import -->
     <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application
         android:allowBackup="true"
@@ -27,15 +25,6 @@
             </intent-filter>
         </activity>
 
-        <!-- SMS Broadcast Receiver (Fallback - disabled in favor of NotificationListenerService) -->
-        <receiver
-            android:name=".data.sms.SmsBroadcastReceiver"
-            android:enabled="false"
-            android:exported="true">
-            <intent-filter android:priority="1000">
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
 
         <!-- SMS Notification Listener Service -->
         <service

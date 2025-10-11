@@ -21,7 +21,6 @@ class PermissionManager(
 ) {
     val smsPermissions =
         arrayOf(
-            Manifest.permission.RECEIVE_SMS,
             Manifest.permission.READ_SMS,
         )
 
@@ -135,7 +134,6 @@ fun rememberSmsPermissionLauncher(
 ): (Boolean) -> Unit {
     val smsPermissions =
         arrayOf(
-            Manifest.permission.RECEIVE_SMS,
             Manifest.permission.READ_SMS,
         )
 
