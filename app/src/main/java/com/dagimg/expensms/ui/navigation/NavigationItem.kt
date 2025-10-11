@@ -2,10 +2,10 @@ package com.dagimg.expensms.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -25,8 +25,8 @@ sealed class NavigationItem(
     object Transactions : NavigationItem(
         route = "transactions",
         title = "Transactions",
-        selectedIcon = Icons.Filled.List,
-        unselectedIcon = Icons.Outlined.List,
+        selectedIcon = Icons.Filled.Receipt,
+        unselectedIcon = Icons.Outlined.Receipt,
     )
 
     object Settings : NavigationItem(

@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dagimg.expensms.data.biometric.BiometricAuthManager
+import com.dagimg.expensms.data.repository.TransactionRepository
 import com.dagimg.expensms.ui.navigation.NavigationItem
 import com.dagimg.expensms.ui.navigation.navigationItems
 import com.dagimg.expensms.ui.screens.HomeScreen
@@ -80,7 +81,7 @@ private fun FragmentActivity.ExpenSMSApp(
             SettingsViewModel(context.applicationContext as android.app.Application)
         }
     val biometricManager = remember { BiometricAuthManager(context) }
-    val coroutineScope = rememberCoroutineScope()
+    val transactionRepository = remember { TransactionRepository.getInstance(context) }
 
     // Check if biometric authentication is required
     val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
@@ -231,7 +232,7 @@ private fun FragmentActivity.ExpenSMSApp(
                 ) {
                     composable(NavigationItem.Home.route) {
                         HomeScreen(
-                            onTransactionClick = { transaction ->
+                            onTransactionClick = { _transaction ->
                                 // TODO: Open transaction edit dialog
                             },
                             onSeeAllClick = {
@@ -245,7 +246,13 @@ private fun FragmentActivity.ExpenSMSApp(
                     }
 
                     composable(NavigationItem.Transactions.route) {
-                        TransactionsScreen()
+                        TransactionsScreen(
+                            repository = transactionRepository,
+                            onTransactionClick = { _transaction ->
+                                // TODO: Open transaction edit dialog
+                            },
+                            onLinkClick = onOpenUrl,
+                        )
                     }
 
                     composable(NavigationItem.Settings.route) {
