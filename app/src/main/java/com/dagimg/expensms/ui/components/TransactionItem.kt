@@ -1,14 +1,17 @@
 package com.dagimg.expensms.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,34 +40,36 @@ fun TransactionItem(
             modifier
                 .fillMaxWidth()
                 .clickable { onTransactionClick(transaction) },
-        shape = Shapes.medium,
+        shape = RoundedCornerShape(16.dp),
         colors =
             CardDefaults.cardColors(
                 containerColor = AppColors.Card,
             ),
         elevation =
             CardDefaults.cardElevation(
-                defaultElevation = 1.dp,
-                pressedElevation = 2.dp,
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp,
+                hoveredElevation = 6.dp,
             ),
+        border = BorderStroke(0.5.dp, AppColors.Border.copy(alpha = 0.3f)),
     ) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(Spacing.lg),
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Transaction Type Icon
             TransactionTypeIcon(
                 type = transaction.type,
-                modifier = Modifier.padding(end = Spacing.md),
+                modifier = Modifier.padding(end = Spacing.lg),
             )
 
             // Transaction Details
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 // Merchant Name
                 Text(
@@ -142,17 +147,28 @@ fun TransactionTypeIcon(
     Box(
         modifier =
             modifier
-                .size(40.dp)
+                .size(42.dp)
                 .clip(CircleShape)
-                .background(backgroundColor),
+                .background(AppColors.Card)
+                .border(1.dp, AppColors.Border.copy(alpha = 0.2f), CircleShape)
+                .padding(1.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = type.name,
-            tint = iconColor,
-            modifier = Modifier.size(20.dp),
-        )
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(backgroundColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = type.name,
+                tint = iconColor,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 
