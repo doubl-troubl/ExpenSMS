@@ -2,11 +2,12 @@ package com.dagimg.expensms.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dagimg.expensms.ui.theme.AppColors
@@ -65,17 +66,15 @@ fun SettingItem(
             )
         }
 
-        // Action or Chevron
+        // Action or Right Arrow
         if (action != null) {
             action()
         } else if (onClick != null) {
             Icon(
-                painter =
-                    androidx.compose.ui.res
-                        .painterResource(id = android.R.drawable.ic_media_next),
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = "Navigate",
                 tint = AppColors.MutedForeground,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }

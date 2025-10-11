@@ -20,7 +20,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.dagimg.expensms.data.model.Transaction
 import com.dagimg.expensms.data.model.TransactionType
 import com.dagimg.expensms.ui.theme.*
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -348,16 +347,13 @@ private fun formatTransactionAmount(
     amount: Double,
     type: TransactionType,
 ): String {
-    val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-    val formattedAmount = formatter.format(amount)
+    // Format Ethiopian Birr with proper symbol
+    val numberFormat = java.text.DecimalFormat("#,##0.00")
+    val formattedNumber = numberFormat.format(amount)
+
     return when (type) {
-        TransactionType.INCOME -> "+$formattedAmount"
-        TransactionType.EXPENSE -> "-$formattedAmount"
-    }.replace("$", "").let {
-        when (type) {
-            TransactionType.INCOME -> "+$$it"
-            TransactionType.EXPENSE -> "-$$it"
-        }
+        TransactionType.INCOME -> "+$formattedNumber"
+        TransactionType.EXPENSE -> "-$formattedNumber"
     }
 }
 

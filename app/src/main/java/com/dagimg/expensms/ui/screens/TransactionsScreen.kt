@@ -19,8 +19,7 @@ import com.dagimg.expensms.data.model.Transaction
 import com.dagimg.expensms.data.repository.TransactionRepository
 import com.dagimg.expensms.ui.components.TransactionEditDialog
 import com.dagimg.expensms.ui.components.TransactionItem
-import com.dagimg.expensms.ui.theme.AppColors
-import com.dagimg.expensms.ui.theme.Spacing
+import com.dagimg.expensms.ui.theme.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -234,13 +233,38 @@ fun TransactionsScreen(
             }
         }
 
-        // Results count
-        Text(
-            text = "${filteredTransactions.size} transactions found",
-            style = MaterialTheme.typography.bodySmall,
-            color = AppColors.MutedForeground,
-            modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.sm),
-        )
+        // Results count and sum
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.xl, vertical = Spacing.sm),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "${filteredTransactions.size} transactions found",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.MutedForeground,
+            )
+
+            // Calculate and display transaction sum
+            val totalSum =
+                filteredTransactions.sumOf { transaction ->
+                    if (transaction.type == com.dagimg.expensms.data.model.TransactionType.INCOME) {
+                        transaction.amount
+                    } else {
+                        -transaction.amount
+                    }
+                }
+
+            Text(
+                text = formatTransactionSum(totalSum),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (totalSum >= 0) AppTransactionColors.Income else AppTransactionColors.Expense,
+                fontWeight = FontWeight.Medium,
+            )
+        }
 
         // Transactions List
         if (filteredTransactions.isEmpty()) {
@@ -348,4 +372,14 @@ private fun FilterChip(
     )
 }
 
-// SettingsScreen moved to SettingsScreen.kt
+// Format transaction sum for display
+private fun formatTransactionSum(amount: Double): String {
+    val numberFormat = java.text.DecimalFormat("#,##0.00")
+    val formattedAmount = numberFormat.format(kotlin.math.abs(amount))
+
+    return if (amount >= 0) {
+        "+$formattedAmount"
+    } else {
+        "-$formattedAmount"
+    }
+}

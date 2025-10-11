@@ -15,11 +15,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dagimg.expensms.R
 import com.dagimg.expensms.data.model.Bank
 import com.dagimg.expensms.ui.theme.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.*
 
@@ -94,13 +98,16 @@ fun BalanceCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Text(
-                text = if (balanceVisible) formatCurrency(bank.currentBalance) else "••••••",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
+            BirrAmountText(
+                amount = bank.currentBalance,
+                style =
+                    MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 36.sp,
+                        letterSpacing = (-0.5).sp,
+                    ),
                 color = Color.White,
-                fontSize = 36.sp,
-                letterSpacing = (-0.5).sp,
+                balanceVisible = balanceVisible,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -209,13 +216,16 @@ fun TotalBalanceCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Text(
-                text = if (balanceVisible) formatCurrency(totalBalance) else "••••••",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
+            BirrAmountText(
+                amount = totalBalance,
+                style =
+                    MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 36.sp,
+                        letterSpacing = (-0.5).sp,
+                    ),
                 color = Color.White,
-                fontSize = 36.sp,
-                letterSpacing = (-0.5).sp,
+                balanceVisible = balanceVisible,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -246,6 +256,59 @@ fun TotalBalanceCard(
             }
         }
     }
+}
+
+@Composable
+fun BirrAmountText(
+    amount: Double,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineLarge,
+    color: Color = Color.White,
+    balanceVisible: Boolean = true,
+) {
+    if (balanceVisible) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Birr symbol
+            Icon(
+                painter = painterResource(id = R.drawable.ic_birr),
+                contentDescription = "Birr symbol",
+                tint = color,
+                modifier = Modifier.size(24.dp),
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Formatted amount
+            Text(
+                text = formatBirrAmount(amount),
+                style = style,
+                color = color,
+            )
+        }
+    } else {
+        Text(
+            text = "••••••",
+            style = style,
+            color = color,
+            modifier = modifier,
+        )
+    }
+}
+
+private fun formatBirrAmount(amount: Double): String {
+    // Create Ethiopian Birr formatter
+    val symbols =
+        DecimalFormatSymbols(Locale.US).apply {
+            // Note: We can't easily change the currency symbol in Java's NumberFormat
+            // So we'll manually format and add the Birr symbol
+        }
+
+    // Format the number part (without currency symbol)
+    val numberFormat = DecimalFormat("#,##0.00", symbols)
+    return numberFormat.format(amount)
 }
 
 private fun formatCurrency(amount: Double): String {

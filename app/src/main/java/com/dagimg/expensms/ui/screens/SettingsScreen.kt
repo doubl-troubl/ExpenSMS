@@ -6,8 +6,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Help
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.NotificationsActive
@@ -353,35 +351,20 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 },
             )
 
-            SettingItem(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = "Privacy",
-                        tint = AppColors.Foreground,
-                    )
-                },
-                title = "Privacy Policy",
-                description = "Learn about our privacy practices",
-                onClick = {
-                    // TODO: Open privacy policy
-                },
-            )
-
-            SettingItem(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Help,
-                        contentDescription = "Support",
-                        tint = AppColors.Foreground,
-                    )
-                },
-                title = "Contact Support",
-                description = "Get help with your account",
-                onClick = {
-                    // TODO: Open support contact
-                },
-            )
+            // SettingItem(
+            //     icon = {
+            //         Icon(
+            //             imageVector = Icons.Outlined.Info,
+            //             contentDescription = "Privacy",
+            //             tint = AppColors.Foreground,
+            //         )
+            //     },
+            //     title = "Privacy Policy",
+            //     description = "Learn about our privacy practices",
+            //     onClick = {
+            //         // TODO: Open privacy policy
+            //     },
+            // )
         }
 
         // App Info

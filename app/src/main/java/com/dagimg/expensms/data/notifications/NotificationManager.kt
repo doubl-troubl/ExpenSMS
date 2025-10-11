@@ -14,7 +14,6 @@ import com.dagimg.expensms.data.model.TransactionType
 import com.dagimg.expensms.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import java.text.NumberFormat
 import java.util.*
 import android.app.NotificationManager as AndroidNotificationManager
 
@@ -122,7 +121,8 @@ class NotificationManager(
     }
 
     private fun formatAmount(amount: Double): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-        return formatter.format(amount).replace("$", "ETB ")
+        // Format Ethiopian Birr with proper symbol
+        val numberFormat = java.text.DecimalFormat("#,##0.00")
+        return "ብር${numberFormat.format(amount)}"
     }
 }
