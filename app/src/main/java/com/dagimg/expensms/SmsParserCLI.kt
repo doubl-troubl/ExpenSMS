@@ -1,7 +1,6 @@
 package com.dagimg.expensms
 
 import com.dagimg.expensms.data.sms.BankSmsParser
-import com.dagimg.expensms.data.sms.CbeSmsParser
 import com.dagimg.expensms.data.sms.ParsedTransaction
 import com.dagimg.expensms.data.sms.SmsParserRegistry
 
@@ -32,11 +31,7 @@ fun main(args: Array<String>) {
     }
 
     // Initialize parser registry
-    val parserRegistry =
-        SmsParserRegistry().apply {
-            registerParser(CbeSmsParser())
-            // Add more parsers here as they are implemented
-        }
+    val parserRegistry = SmsParserRegistry()
 
     when {
         args.size >= 2 && args[0] == "auto" -> {
@@ -89,11 +84,7 @@ private fun showHelp() {
 }
 
 private fun listBanks(showHeader: Boolean = true) {
-    val parserRegistry =
-        SmsParserRegistry().apply {
-            registerParser(CbeSmsParser())
-            // Add more parsers here as they are implemented
-        }
+    val parserRegistry = SmsParserRegistry()
 
     if (showHeader) {
         println("🏦 Available Bank Parsers:")

@@ -7,6 +7,12 @@ package com.dagimg.expensms.data.sms
 class SmsParserRegistry {
     private val parsers: MutableList<BankSmsParser> = mutableListOf()
 
+    init {
+        // Register all available parsers
+        registerParser(CbeSmsParser())
+        registerParser(TelebirrSmsParser())
+    }
+
     /**
      * Register a new bank parser
      */
