@@ -213,26 +213,3 @@ private fun formatCurrency(amount: Double): String {
     return formatter.format(amount)
 }
 
-@Preview
-@Composable
-fun BalanceCardPreview() {
-    val dummyBank =
-        Bank(
-            id = 1,
-            name = "chase",
-            displayName = "Chase",
-            colorHex = "#3B82F6",
-            currentBalance = 27209.68,
-            lastUpdated = System.currentTimeMillis(),
-        )
-
-    MaterialTheme {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            TotalBalanceCard(totalBalance = 45280.50)
-            BalanceCard(bank = dummyBank)
-        }
-    }
-}

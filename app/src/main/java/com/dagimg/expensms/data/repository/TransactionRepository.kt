@@ -238,15 +238,7 @@ class TransactionRepository(
 
     private fun getBankColor(bankName: String): String =
         when (bankName.lowercase()) {
-            "commercial bank of ethiopia" -> "#1e40af" // Blue
-            "dashen bank" -> "#dc2626" // Red
-            "awash international bank" -> "#059669" // Green
-            "bank of abyssinia" -> "#7c3aed" // Purple
-            "bunna international bank" -> "#ea580c" // Orange
-            "deutsche geschaftsbank" -> "#0891b2" // Cyan
-            "lion international bank" -> "#c2410c" // Brown
-            "zemen bank" -> "#be185d" // Pink
-            "cooperative bank" -> "#365314" // Dark Green
+            "commercial bank of ethiopia" -> "#86198F"
             else -> "#6b7280" // Gray for unknown banks
         }
 
