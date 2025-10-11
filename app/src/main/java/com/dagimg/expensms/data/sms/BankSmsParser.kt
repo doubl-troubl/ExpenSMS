@@ -40,4 +40,5 @@ data class ParsedTransaction(
     val transactionUrl: String?,
     val rawSms: String,
     val bankName: String,
+    val userName: String? = null, // Extracted user name from SMS (e.g., "Dear John")
 )

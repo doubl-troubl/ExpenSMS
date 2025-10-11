@@ -27,6 +27,7 @@ class UserPreferencesRepository(
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val THEME_KEY = stringPreferencesKey("theme")
+        private val USER_NAME_EXTRACTED_KEY = booleanPreferencesKey("user_name_extracted") // Track if we've extracted a user name
     }
 
     fun getSmsPermissionGranted(): Flow<Boolean> =
@@ -77,6 +78,12 @@ class UserPreferencesRepository(
                 preferences[HISTORICAL_PARSING_DONE_KEY] ?: false
             }
 
+    fun getUserNameExtracted(): Flow<Boolean> =
+        dataStore.data
+            .map { preferences ->
+                preferences[USER_NAME_EXTRACTED_KEY] ?: false
+            }
+
     suspend fun setSmsPermission(granted: Boolean) {
         dataStore.edit { preferences ->
             preferences[SMS_PERMISSION_KEY] = granted
@@ -104,6 +111,7 @@ class UserPreferencesRepository(
     suspend fun setUserName(name: String) {
         dataStore.edit { preferences ->
             preferences[USER_NAME_KEY] = name
+            preferences[USER_NAME_EXTRACTED_KEY] = true
         }
     }
 

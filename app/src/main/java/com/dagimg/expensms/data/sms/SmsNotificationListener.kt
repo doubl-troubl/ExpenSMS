@@ -7,9 +7,11 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.dagimg.expensms.data.notifications.NotificationManager
 import com.dagimg.expensms.data.repository.TransactionRepository
+import com.dagimg.expensms.data.repository.UserPreferencesRepository
 import com.dagimg.expensms.data.util.TransactionDateResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -150,6 +152,11 @@ class SmsNotificationListener : NotificationListenerService() {
             val savedId = repository.saveFromParsedTransaction(parsed)
             println("DEBUG: Transaction saved to database with ID: $savedId")
 
+            // Save user name if extracted and not already saved
+            if (!parsed.userName.isNullOrBlank()) {
+                saveUserNameIfNeeded(context, parsed.userName)
+            }
+
             // Send notification for new transaction
             val transaction = repository.getTransactionById(savedId)
             if (transaction != null) {
@@ -159,6 +166,23 @@ class SmsNotificationListener : NotificationListenerService() {
         } catch (e: Exception) {
             println("ERROR: Failed to save transaction: ${e.message}")
             e.printStackTrace()
+        }
+    }
+
+    private suspend fun saveUserNameIfNeeded(
+        context: Context,
+        userName: String,
+    ) {
+        try {
+            val userPrefs = UserPreferencesRepository(context)
+            val alreadyExtracted = userPrefs.getUserNameExtracted().first()
+
+            if (!alreadyExtracted) {
+                userPrefs.setUserName(userName)
+                println("DEBUG: User name extracted and saved: $userName")
+            }
+        } catch (e: Exception) {
+            println("ERROR: Failed to save user name: ${e.message}")
         }
     }
 

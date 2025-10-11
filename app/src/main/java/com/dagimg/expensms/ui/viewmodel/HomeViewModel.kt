@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dagimg.expensms.data.repository.TransactionRepository
+import com.dagimg.expensms.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ class HomeViewModel(
     application: Application,
 ) : ViewModel() {
     private val transactionRepository = TransactionRepository.getInstance(application)
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     // State for balance cards - derived from transaction data
     val balanceCardsState =
@@ -33,9 +35,11 @@ class HomeViewModel(
         transactionRepository.totalBalance
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // State for user name (could be made configurable later)
-    private val _userName = MutableStateFlow("User")
-    val userName: StateFlow<String> = _userName.asStateFlow()
+    // State for user name (from extracted SMS data or default)
+    val userName: StateFlow<String> =
+        userPreferencesRepository
+            .getUserName()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "User")
 
     // State for current date
     private val _currentDate = MutableStateFlow("")

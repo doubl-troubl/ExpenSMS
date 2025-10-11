@@ -22,6 +22,7 @@ class CbeSmsParser : BankSmsParser {
     private val merchantRegex = Regex("transfered ETB [\\d,]+\\.?\\d* to ([^\\n]+?) on", RegexOption.IGNORE_CASE)
     private val dateRegex = Regex("on (\\d{2}/\\d{2}/\\d{4})", RegexOption.IGNORE_CASE)
     private val urlRegex = Regex("(https://[^\\s]+)", RegexOption.IGNORE_CASE)
+    private val userNameRegex = Regex("Dear (\\w+)", RegexOption.IGNORE_CASE)
 
     override fun canParse(
         sender: String,
@@ -83,9 +84,10 @@ class CbeSmsParser : BankSmsParser {
             // Using current time as placeholder - will be replaced by resolver
             val timestamp = System.currentTimeMillis()
             val url = extractUrl(message)
+            val userName = extractUserName(message)
 
             println(
-                "DEBUG: Parsed transaction - merchant: '$merchant', amount: $amount, type: $type, balance: $balance",
+                "DEBUG: Parsed transaction - merchant: '$merchant', amount: $amount, type: $type, balance: $balance, user: '$userName'",
             )
 
             return ParsedTransaction(
@@ -97,6 +99,7 @@ class CbeSmsParser : BankSmsParser {
                 transactionUrl = url,
                 rawSms = message,
                 bankName = bankName,
+                userName = userName,
             )
         } catch (e: Exception) {
             // Log error and return null
@@ -177,4 +180,11 @@ class CbeSmsParser : BankSmsParser {
     }
 
     private fun extractUrl(message: String): String? = urlRegex.find(message)?.groupValues?.get(1)
+
+    private fun extractUserName(message: String): String? =
+        userNameRegex
+            .find(message)
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
 }
