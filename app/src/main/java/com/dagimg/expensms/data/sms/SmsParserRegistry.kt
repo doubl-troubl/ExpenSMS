@@ -11,6 +11,7 @@ class SmsParserRegistry {
         // Register all available parsers
         registerParser(CbeSmsParser())
         registerParser(TelebirrSmsParser())
+        registerParser(AbyssiniaSmsParser())
     }
 
     /**
