@@ -77,6 +77,13 @@ class TransactionRepository(
             .getTransactionsByBank(bankName)
             .map { entities -> entities.map { it.toDomainModel() } }
 
+    // Get list of available banks (distinct bank names from transactions)
+    val availableBanks: Flow<List<String>> =
+        database
+            .transactionDao()
+            .getDistinctBankNames()
+            .map { it.sorted() }
+
     // Add a new transaction from parsed SMS
     suspend fun addTransaction(parsedTransaction: ParsedTransaction): Long {
         println("DEBUG: TransactionRepository.addTransaction called with: $parsedTransaction")

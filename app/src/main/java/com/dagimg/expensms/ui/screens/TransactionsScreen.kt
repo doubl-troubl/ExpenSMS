@@ -2,6 +2,7 @@ package com.dagimg.expensms.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,26 +29,57 @@ fun TransactionsScreen(
     onLinkClick: (String) -> Unit = {},
 ) {
     val transactions by repository.transactions.collectAsState(initial = emptyList())
+    val availableBanks by repository.availableBanks.collectAsState(initial = emptyList())
+
+    // Define filter options
+    val categoryOptions =
+        listOf(
+            "All Categories",
+            "Income",
+            "Groceries",
+            "Food & Drink",
+            "Transport",
+            "Shopping",
+            "Entertainment",
+            "Bills & Utilities",
+            "Healthcare",
+            "Education",
+            "Travel",
+            "Other",
+        )
+
+    val timeOptions = listOf("All Time", "Today", "Last 7 Days", "Last 30 Days")
+
     var searchQuery by remember { mutableStateOf("") }
-    var selectedBankFilter by remember { mutableStateOf("All Banks") }
-    var selectedCategoryFilter by remember { mutableStateOf("All Categories") }
+    var selectedBankFilters by remember { mutableStateOf(setOf("All Banks")) }
+    var selectedCategoryFilters by remember { mutableStateOf(setOf("All Categories")) }
     var selectedTimeFilter by remember { mutableStateOf("All Time") }
 
     val filteredTransactions =
         transactions.filter { transaction ->
             // Search filter
-            searchQuery.isEmpty() ||
-                transaction.merchant.contains(searchQuery, ignoreCase = true) ||
-                transaction.category.contains(searchQuery, ignoreCase = true)
+            val matchesSearch =
+                searchQuery.isEmpty() ||
+                    transaction.merchant.contains(searchQuery, ignoreCase = true) ||
+                    transaction.category.contains(searchQuery, ignoreCase = true)
 
-            // Bank filter (for now, just check if bank name matches)
-            selectedBankFilter == "All Banks" || transaction.bankName == selectedBankFilter
+            // Bank filter - OR logic: show if any selected bank matches OR "All Banks" is selected
+            val matchesBank =
+                selectedBankFilters.contains("All Banks") ||
+                    selectedBankFilters.contains(transaction.bankName)
 
-            // Category filter (for now, just check if category matches)
-            selectedCategoryFilter == "All Categories" || transaction.category == selectedCategoryFilter
+            // Category filter - OR logic: show if any selected category matches OR "All Categories" is selected
+            val matchesCategory =
+                selectedCategoryFilters.contains("All Categories") ||
+                    selectedCategoryFilters.contains(transaction.category)
 
-            // Time filter (for now, just return all - can be enhanced later)
-            selectedTimeFilter == "All Time" || true
+            // Time filter - single selection
+            val matchesTime =
+                selectedTimeFilter == "All Time" ||
+                    isTransactionInTimeRange(transaction.timestamp, selectedTimeFilter)
+
+            // All filters must match (AND logic between filter types, OR logic within each type)
+            matchesSearch && matchesBank && matchesCategory && matchesTime
         }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -80,7 +112,7 @@ fun TransactionsScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.xl)
+                    .padding(horizontal = Spacing.md)
                     .padding(bottom = Spacing.md)
                     .clip(RoundedCornerShape(12.dp)),
             colors =
@@ -93,8 +125,87 @@ fun TransactionsScreen(
             singleLine = true,
         )
 
-        // Filter Chips
-        Row(
+        // Bank Filter Chips
+        LazyRow(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.xl)
+                    .padding(bottom = Spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            item {
+                FilterChip(
+                    label = "All Banks",
+                    selected = selectedBankFilters.contains("All Banks"),
+                    onClick = {
+                        selectedBankFilters = setOf("All Banks")
+                    },
+                )
+            }
+            items(availableBanks) { bankName ->
+                FilterChip(
+                    label = bankName,
+                    selected = selectedBankFilters.contains(bankName),
+                    onClick = {
+                        val newSelection = selectedBankFilters.toMutableSet()
+                        if (newSelection.contains(bankName)) {
+                            // If this was the only specific bank selected, go back to "All Banks"
+                            newSelection.remove(bankName)
+                            if (newSelection.isEmpty() || newSelection == setOf("All Banks")) {
+                                newSelection.clear()
+                                newSelection.add("All Banks")
+                            }
+                        } else {
+                            // Remove "All Banks" and add this specific bank
+                            newSelection.remove("All Banks")
+                            newSelection.add(bankName)
+                        }
+                        selectedBankFilters = newSelection
+                    },
+                )
+            }
+        }
+
+        // Category Filter Chips
+        LazyRow(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.xl)
+                    .padding(bottom = Spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            items(categoryOptions) { category ->
+                FilterChip(
+                    label = category,
+                    selected = selectedCategoryFilters.contains(category),
+                    onClick = {
+                        if (category == "All Categories") {
+                            selectedCategoryFilters = setOf("All Categories")
+                        } else {
+                            val newSelection = selectedCategoryFilters.toMutableSet()
+                            if (newSelection.contains(category)) {
+                                // If this was the only specific category selected, go back to "All Categories"
+                                newSelection.remove(category)
+                                if (newSelection.isEmpty() || newSelection == setOf("All Categories")) {
+                                    newSelection.clear()
+                                    newSelection.add("All Categories")
+                                }
+                            } else {
+                                // Remove "All Categories" and add this specific category
+                                newSelection.remove("All Categories")
+                                newSelection.add(category)
+                            }
+                            selectedCategoryFilters = newSelection
+                        }
+                    },
+                )
+            }
+        }
+
+        // Time Filter Chips
+        LazyRow(
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -102,23 +213,15 @@ fun TransactionsScreen(
                     .padding(bottom = Spacing.md),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
-            FilterChip(
-                label = "All Banks",
-                selected = selectedBankFilter == "All Banks",
-                onClick = { selectedBankFilter = "All Banks" },
-            )
-
-            FilterChip(
-                label = "Chase",
-                selected = selectedBankFilter == "Chase",
-                onClick = { selectedBankFilter = "Chase" },
-            )
-
-            FilterChip(
-                label = "CBE",
-                selected = selectedBankFilter == "Commercial Bank of Ethiopia",
-                onClick = { selectedBankFilter = "Commercial Bank of Ethiopia" },
-            )
+            items(timeOptions) { timeOption ->
+                FilterChip(
+                    label = timeOption,
+                    selected = selectedTimeFilter == timeOption,
+                    onClick = {
+                        selectedTimeFilter = timeOption
+                    },
+                )
+            }
         }
 
         // Results count
@@ -155,6 +258,38 @@ fun TransactionsScreen(
                 }
             }
         }
+    }
+}
+
+// Helper function to check if transaction is within time range
+private fun isTransactionInTimeRange(
+    timestamp: Long,
+    timeFilter: String,
+): Boolean {
+    val now = System.currentTimeMillis()
+    val transactionTime = timestamp
+
+    return when (timeFilter) {
+        "Today" -> {
+            // Get start of today (midnight)
+            val calendar = java.util.Calendar.getInstance()
+            calendar.timeInMillis = now
+            calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            calendar.set(java.util.Calendar.MINUTE, 0)
+            calendar.set(java.util.Calendar.SECOND, 0)
+            calendar.set(java.util.Calendar.MILLISECOND, 0)
+            val todayStart = calendar.timeInMillis
+            transactionTime >= todayStart
+        }
+        "Last 7 Days" -> {
+            val sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000)
+            transactionTime >= sevenDaysAgo
+        }
+        "Last 30 Days" -> {
+            val thirtyDaysAgo = now - (30L * 24 * 60 * 60 * 1000)
+            transactionTime >= thirtyDaysAgo
+        }
+        else -> true
     }
 }
 

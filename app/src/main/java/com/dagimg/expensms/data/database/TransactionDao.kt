@@ -41,4 +41,7 @@ interface TransactionDao {
         startTime: Long,
         endTime: Long,
     ): Flow<List<TransactionEntity>>
+
+    @Query("SELECT DISTINCT bankName FROM transactions ORDER BY bankName")
+    fun getDistinctBankNames(): Flow<List<String>>
 }
