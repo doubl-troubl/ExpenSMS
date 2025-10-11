@@ -136,6 +136,13 @@ object BankColors {
     val Bank4 = Color(0xFFEC4899) // rgb(236, 72, 153) - Pink
 }
 
+// Beautiful Theme Switcher Colors
+object ThemeSwitcherColors {
+    val BlueSky = Color(0xFF4478a9)
+    val NightSky = Color(0xFF333333)
+    val BorderColor = Color(0x40000000)
+}
+
 // Transaction Colors
 object TransactionColors {
     // Light Theme
