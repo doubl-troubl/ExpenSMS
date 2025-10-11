@@ -20,8 +20,10 @@ class UserPreferencesRepository(
 
     companion object {
         private val SMS_PERMISSION_KEY = booleanPreferencesKey("sms_permission_granted")
+        private val NOTIFICATION_ACCESS_KEY = booleanPreferencesKey("notification_access_granted")
         private val NOTIFICATIONS_KEY = booleanPreferencesKey("notifications_enabled")
         private val BIOMETRIC_KEY = booleanPreferencesKey("biometric_enabled")
+        private val HISTORICAL_PARSING_DONE_KEY = booleanPreferencesKey("historical_parsing_done")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val THEME_KEY = stringPreferencesKey("theme")
@@ -31,6 +33,12 @@ class UserPreferencesRepository(
         dataStore.data
             .map { preferences ->
                 preferences[SMS_PERMISSION_KEY] ?: false
+            }
+
+    fun getNotificationAccessGranted(): Flow<Boolean> =
+        dataStore.data
+            .map { preferences ->
+                preferences[NOTIFICATION_ACCESS_KEY] ?: false
             }
 
     fun getNotificationsEnabled(): Flow<Boolean> =
@@ -63,9 +71,21 @@ class UserPreferencesRepository(
                 preferences[THEME_KEY] ?: "light"
             }
 
+    fun getHistoricalParsingDone(): Flow<Boolean> =
+        dataStore.data
+            .map { preferences ->
+                preferences[HISTORICAL_PARSING_DONE_KEY] ?: false
+            }
+
     suspend fun setSmsPermission(granted: Boolean) {
         dataStore.edit { preferences ->
             preferences[SMS_PERMISSION_KEY] = granted
+        }
+    }
+
+    suspend fun setNotificationAccess(granted: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[NOTIFICATION_ACCESS_KEY] = granted
         }
     }
 
@@ -96,6 +116,12 @@ class UserPreferencesRepository(
     suspend fun setTheme(theme: String) {
         dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
+        }
+    }
+
+    suspend fun setHistoricalParsingDone(done: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HISTORICAL_PARSING_DONE_KEY] = done
         }
     }
 }

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dagimg.expensms.data.biometric.BiometricAuthManager
+import com.dagimg.expensms.data.repository.TransactionRepository
 import com.dagimg.expensms.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
@@ -16,10 +17,16 @@ class SettingsViewModel(
 ) : AndroidViewModel(application) {
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val biometricManager = BiometricAuthManager(application)
+    private val transactionRepository = TransactionRepository.getInstance(application)
 
     val smsPermissionGranted =
         userPreferencesRepository
             .getSmsPermissionGranted()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val notificationAccessGranted =
+        userPreferencesRepository
+            .getNotificationAccessGranted()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val notificationsEnabled =
@@ -40,6 +47,12 @@ class SettingsViewModel(
     fun setSmsPermission(granted: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setSmsPermission(granted)
+        }
+    }
+
+    fun setNotificationAccess(granted: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setNotificationAccess(granted)
         }
     }
 
@@ -81,8 +94,41 @@ class SettingsViewModel(
             userPreferencesRepository.getSmsPermissionGranted().first()
         }
 
+    fun getNotificationAccessGrantedSync(): Boolean =
+        runBlocking {
+            userPreferencesRepository.getNotificationAccessGranted().first()
+        }
+
     fun getNotificationsEnabledSync(): Boolean =
         runBlocking {
             userPreferencesRepository.getNotificationsEnabled().first()
         }
+
+    fun getHistoricalParsingDoneSync(): Boolean =
+        runBlocking {
+            userPreferencesRepository.getHistoricalParsingDone().first()
+        }
+
+    fun setHistoricalParsingDone(done: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setHistoricalParsingDone(done)
+        }
+    }
+
+    fun clearAllData() {
+        viewModelScope.launch {
+            try {
+                // Clear all transactions from database
+                transactionRepository.clearAllData()
+
+                // Reset historical parsing flag so it can be run again
+                userPreferencesRepository.setHistoricalParsingDone(false)
+
+                println("DEBUG: All data cleared successfully")
+            } catch (e: Exception) {
+                println("ERROR: Failed to clear data: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
 }

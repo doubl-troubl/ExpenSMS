@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Help
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dagimg.expensms.data.biometric.BiometricAuthManager
 import com.dagimg.expensms.data.permissions.PermissionManager
 import com.dagimg.expensms.data.permissions.rememberSmsPermissionLauncher
+import com.dagimg.expensms.data.sms.HistoricalSmsParser
 import com.dagimg.expensms.ui.components.SettingItem
 import com.dagimg.expensms.ui.theme.*
 import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
@@ -46,6 +49,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     // Get initial values synchronously to prevent toggle animation from defaults
     val initialSmsPermissionGranted by remember { mutableStateOf(settingsViewModel.getSmsPermissionGrantedSync()) }
+    val initialNotificationAccessGranted by remember {
+        mutableStateOf(settingsViewModel.getNotificationAccessGrantedSync())
+    }
     val initialNotificationsEnabled by remember { mutableStateOf(settingsViewModel.getNotificationsEnabledSync()) }
     val initialBiometricEnabled by remember { mutableStateOf(settingsViewModel.getBiometricEnabledSync()) }
 
@@ -53,20 +59,69 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val smsPermissionGranted by settingsViewModel.smsPermissionGranted.collectAsState(
         initial = initialSmsPermissionGranted,
     )
+    val notificationAccessGranted by settingsViewModel.notificationAccessGranted.collectAsState(
+        initial = initialNotificationAccessGranted,
+    )
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState(
         initial = initialNotificationsEnabled,
     )
     val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState(initial = initialBiometricEnabled)
 
+    // State for clear data confirmation dialog
+    var showClearDataDialog by remember { mutableStateOf(false) }
+
+    // Function to trigger historical parsing
+    fun triggerHistoricalParsing(forceRun: Boolean = false) {
+        coroutineScope.launch {
+            try {
+                // Check if parsing has already been done (unless forced)
+                if (!forceRun && settingsViewModel.getHistoricalParsingDoneSync()) {
+                    println("DEBUG: Historical parsing already done, skipping")
+                    return@launch
+                }
+
+                val parser = HistoricalSmsParser.create(context)
+                val count = parser.parseHistoricalSms()
+                println("DEBUG: Parsed $count historical transactions")
+
+                // Mark as done
+                settingsViewModel.setHistoricalParsingDone(true)
+
+                // TODO: Show success message to user
+            } catch (e: Exception) {
+                println("ERROR: Failed to parse historical SMS: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
     val smsPermissionLauncher =
         rememberSmsPermissionLauncher(
             onGranted = {
                 settingsViewModel.setSmsPermission(true)
+                // Trigger historical SMS parsing when SMS permission is first granted
+                triggerHistoricalParsing()
             },
             onDenied = {
                 settingsViewModel.setSmsPermission(false)
             },
         )
+
+    // Check notification access status when screen is shown
+    LaunchedEffect(Unit) {
+        val hasAccess = permissionManager.hasNotificationAccess()
+        settingsViewModel.setNotificationAccess(hasAccess)
+    }
+
+    // Auto-trigger historical parsing when SMS permission is first granted (one-time)
+    LaunchedEffect(smsPermissionGranted) {
+        if (smsPermissionGranted && permissionManager.hasSmsPermissions()) {
+            // Only trigger if this hasn't been done before
+            if (!settingsViewModel.getHistoricalParsingDoneSync()) {
+                triggerHistoricalParsing()
+            }
+        }
+    }
 
     Column(
         modifier =
@@ -102,6 +157,38 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             } else {
                                 // Revoke SMS permission
                                 settingsViewModel.setSmsPermission(false)
+                            }
+                        },
+                        colors =
+                            SwitchDefaults.colors(
+                                checkedThumbColor = AppColors.Primary,
+                                checkedTrackColor = AppColors.Primary.copy(alpha = 0.3f),
+                            ),
+                    )
+                },
+            )
+
+            // Notification Access
+            SettingItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.NotificationsActive,
+                        contentDescription = "Notification Access",
+                        tint = AppColors.Foreground,
+                    )
+                },
+                title = "Notification Access",
+                description = "Required for real-time SMS parsing when app is closed",
+                action = {
+                    Switch(
+                        checked = notificationAccessGranted,
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                // Open notification listener settings
+                                permissionManager.requestNotificationAccess()
+                            } else {
+                                // User wants to disable - update preference
+                                settingsViewModel.setNotificationAccess(false)
                             }
                         },
                         colors =
@@ -182,6 +269,27 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
         // Data & Support Section
         SettingsSection(title = "Data & Support") {
+            // Parse Historical SMS
+            SettingItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Email,
+                        contentDescription = "Parse SMS",
+                        tint = AppColors.Foreground,
+                    )
+                },
+                title = "Parse Historical SMS",
+                description = "Scan past 30 days of SMS for transactions",
+                onClick = {
+                    if (permissionManager.hasSmsPermissions()) {
+                        triggerHistoricalParsing(forceRun = true)
+                    } else {
+                        // Show message that SMS permission is needed
+                        println("DEBUG: SMS permission required for historical parsing")
+                    }
+                },
+            )
+
             SettingItem(
                 icon = {
                     Icon(
@@ -194,6 +302,23 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 description = "Export your transaction data",
                 onClick = {
                     // TODO: Implement data export
+                },
+            )
+
+            // Clear Data
+            SettingItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = "Clear Data",
+                        tint = AppColors.Foreground,
+                    )
+                },
+                title = "Clear Data",
+                description = "Delete all transactions and reset app data",
+                onClick = {
+                    // Show confirmation dialog
+                    showClearDataDialog = true
                 },
             )
 
@@ -264,6 +389,51 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.height(Spacing.lg))
+    }
+
+    // Clear Data Confirmation Dialog
+    if (showClearDataDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDataDialog = false },
+            title = {
+                Text(
+                    text = "Clear All Data",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = AppColors.Foreground,
+                )
+            },
+            text = {
+                Text(
+                    text = "This will permanently delete all transactions and reset the app. This action cannot be undone. Are you sure you want to continue?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.MutedForeground,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        settingsViewModel.clearAllData()
+                        showClearDataDialog = false
+                    },
+                ) {
+                    Text(
+                        text = "Clear Data",
+                        color = AppColors.Primary,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showClearDataDialog = false },
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = AppColors.MutedForeground,
+                    )
+                }
+            },
+            containerColor = AppColors.Card,
+        )
     }
 }
 

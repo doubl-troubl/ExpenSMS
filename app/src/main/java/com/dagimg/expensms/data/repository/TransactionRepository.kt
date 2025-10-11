@@ -113,6 +113,10 @@ class TransactionRepository(
         return insertedId
     }
 
+    // Save transaction from parsed SMS (alias for addTransaction)
+    suspend fun saveFromParsedTransaction(parsedTransaction: ParsedTransaction): Long =
+        addTransaction(parsedTransaction)
+
     // Update an existing transaction
     suspend fun updateTransaction(updatedTransaction: Transaction) {
         val entity = updatedTransaction.toEntity()
@@ -124,6 +128,12 @@ class TransactionRepository(
     suspend fun deleteTransaction(transactionId: Long) {
         database.transactionDao().deleteTransactionById(transactionId)
         println("DEBUG: Deleted transaction: $transactionId")
+    }
+
+    // Clear all transaction data
+    suspend fun clearAllData() {
+        database.transactionDao().deleteAllTransactions()
+        println("DEBUG: Cleared all transaction data")
     }
 
     // Get transaction by ID
@@ -239,6 +249,8 @@ class TransactionRepository(
     private fun getBankColor(bankName: String): String =
         when (bankName.lowercase()) {
             "commercial bank of ethiopia" -> "#86198F"
+            "abyssinia bank" -> "#F6A701"
+            "telebirr" -> "#1A88C5"
             else -> "#6b7280" // Gray for unknown banks
         }
 

@@ -112,7 +112,7 @@ private object LightColors {
     val MutedForeground = Color(0xFF717182) // rgb(113, 113, 130)
     val Accent = Color(0xFFE9EBEF) // rgb(233, 235, 239)
     val Border = Color(0xFFE5E5E5) // rgb(229, 229, 229)
-    val Primary = Color(0xFF030213) // rgb(3, 2, 19)
+    val Primary = Color(0xFF030213) // #030213
 }
 
 // Dark Theme Colors
