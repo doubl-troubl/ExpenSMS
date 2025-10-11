@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.net.Uri
 import androidx.core.content.ContextCompat
 import com.dagimg.expensms.data.repository.TransactionRepository
+import com.dagimg.expensms.data.util.TransactionDateResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -88,9 +89,22 @@ class HistoricalSmsParser(
                         val parsed = parserRegistry.parseTransaction(smsData.sender, smsData.body)
 
                         if (parsed != null) {
+                            // Resolve the transaction date using our robust date resolver
+                            val resolvedDate =
+                                TransactionDateResolver.resolveDate(
+                                    messageBody = smsData.body,
+                                    smsProviderDate = smsData.timestamp,
+                                    bankName = parsed.bankName,
+                                )
+
+                            println("DEBUG: Resolved date for historical SMS: ${java.util.Date(resolvedDate)}")
+
+                            // Create updated parsed transaction with resolved date
+                            val parsedWithResolvedDate = parsed.copy(timestamp = resolvedDate)
+
                             // Check if transaction already exists (avoid duplicates)
-                            if (!isDuplicateTransaction(parsed)) {
-                                repository.saveFromParsedTransaction(parsed)
+                            if (!isDuplicateTransaction(parsedWithResolvedDate)) {
+                                repository.saveFromParsedTransaction(parsedWithResolvedDate)
                                 successCount++
                                 println("DEBUG: Saved historical transaction from ${smsData.sender}")
                             } else {

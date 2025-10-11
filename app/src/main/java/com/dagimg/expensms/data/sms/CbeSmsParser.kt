@@ -79,7 +79,9 @@ class CbeSmsParser : BankSmsParser {
 
             // Extract optional fields
             val merchant = extractMerchant(message) ?: "Unknown"
-            val timestamp = extractDate(message) ?: System.currentTimeMillis()
+            // Note: Date resolution is now handled separately by TransactionDateResolver
+            // Using current time as placeholder - will be replaced by resolver
+            val timestamp = System.currentTimeMillis()
             val url = extractUrl(message)
 
             println(

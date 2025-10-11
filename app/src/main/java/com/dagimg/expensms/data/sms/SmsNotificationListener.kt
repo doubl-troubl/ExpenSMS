@@ -7,6 +7,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.dagimg.expensms.data.notifications.NotificationManager
 import com.dagimg.expensms.data.repository.TransactionRepository
+import com.dagimg.expensms.data.util.TransactionDateResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,9 +74,23 @@ class SmsNotificationListener : NotificationListenerService() {
             if (parsed != null) {
                 println("DEBUG: Successfully parsed transaction: $parsed")
 
+                // Resolve the transaction date using our robust date resolver
+                val notificationTime = sbn.postTime
+                val resolvedDate =
+                    TransactionDateResolver.resolveDate(
+                        messageBody = message,
+                        notificationPostTime = notificationTime,
+                        bankName = parsed.bankName,
+                    )
+
+                println("DEBUG: Resolved date: ${java.util.Date(resolvedDate)} (source: notification timestamp)")
+
+                // Create updated parsed transaction with resolved date
+                val parsedWithResolvedDate = parsed.copy(timestamp = resolvedDate)
+
                 // Save to database in background
                 CoroutineScope(Dispatchers.IO).launch {
-                    saveTransaction(applicationContext, parsed)
+                    saveTransaction(applicationContext, parsedWithResolvedDate)
                 }
             } else {
                 println("DEBUG: Failed to parse SMS from '$sender'")
