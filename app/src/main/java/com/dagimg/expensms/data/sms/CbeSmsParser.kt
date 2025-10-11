@@ -11,7 +11,7 @@ import kotlin.text.Regex
  */
 class CbeSmsParser : BankSmsParser {
     override val bankName = "Commercial Bank of Ethiopia"
-    override val senderIds = listOf("CBE", "CBE-ET", "CBEBIRR", "Jeremiah I")
+    override val senderIds = listOf("CBE", "CBE-ET", "CBEBIRR", "Jeremiah I", "J D2")
 
     // Regex patterns for CBE SMS format (case insensitive)
     private val balanceRegex = Regex("Your Current Balance is ETB ([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE)

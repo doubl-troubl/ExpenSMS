@@ -27,6 +27,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dagimg.expensms.data.biometric.BiometricAuthManager
 import com.dagimg.expensms.data.permissions.PermissionManager
+import com.dagimg.expensms.data.permissions.rememberNotificationPermissionLauncher
 import com.dagimg.expensms.data.permissions.rememberSmsPermissionLauncher
 import com.dagimg.expensms.data.sms.HistoricalSmsParser
 import com.dagimg.expensms.ui.components.SettingItem
@@ -54,6 +55,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     }
     val initialNotificationsEnabled by remember { mutableStateOf(settingsViewModel.getNotificationsEnabledSync()) }
     val initialBiometricEnabled by remember { mutableStateOf(settingsViewModel.getBiometricEnabledSync()) }
+    val initialNotificationPermissionGranted by remember {
+        mutableStateOf(permissionManager.hasNotificationPermissions())
+    }
 
     // Collect state from ViewModel (these will update reactively after initial load)
     val smsPermissionGranted by settingsViewModel.smsPermissionGranted.collectAsState(
@@ -66,6 +70,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         initial = initialNotificationsEnabled,
     )
     val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState(initial = initialBiometricEnabled)
+
+    // State for notification permissions (checked when screen is shown)
+    var notificationPermissionGranted by remember { mutableStateOf(initialNotificationPermissionGranted) }
 
     // State for clear data confirmation dialog
     var showClearDataDialog by remember { mutableStateOf(false) }
@@ -107,10 +114,25 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             },
         )
 
-    // Check notification access status when screen is shown
+    val notificationPermissionLauncher =
+        rememberNotificationPermissionLauncher(
+            onGranted = {
+                notificationPermissionGranted = true
+                settingsViewModel.setNotifications(true)
+            },
+            onDenied = {
+                notificationPermissionGranted = false
+                settingsViewModel.setNotifications(false)
+            },
+        )
+
+    // Check notification access and permissions status when screen is shown
     LaunchedEffect(Unit) {
         val hasAccess = permissionManager.hasNotificationAccess()
         settingsViewModel.setNotificationAccess(hasAccess)
+
+        val hasNotificationPermission = permissionManager.hasNotificationPermissions()
+        notificationPermissionGranted = hasNotificationPermission
     }
 
     // Auto-trigger historical parsing when SMS permission is first granted (one-time)
@@ -213,9 +235,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 description = "Get notified about new transactions",
                 action = {
                     Switch(
-                        checked = notificationsEnabled,
+                        checked = notificationsEnabled && notificationPermissionGranted,
                         onCheckedChange = { enabled ->
-                            settingsViewModel.setNotifications(enabled)
+                            if (enabled) {
+                                if (notificationPermissionGranted) {
+                                    settingsViewModel.setNotifications(true)
+                                } else {
+                                    notificationPermissionLauncher(true)
+                                }
+                            } else {
+                                settingsViewModel.setNotifications(false)
+                            }
                         },
                         colors =
                             SwitchDefaults.colors(

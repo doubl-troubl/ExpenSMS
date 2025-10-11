@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.dagimg.expensms.data.notifications.NotificationManager
 import com.dagimg.expensms.data.repository.TransactionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,8 @@ class SmsNotificationListener : NotificationListenerService() {
             registerParser(TelebirrSmsParser())
             registerParser(AbyssiniaSmsParser())
         }
+
+    private lateinit var notificationManager: NotificationManager
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
@@ -129,8 +132,15 @@ class SmsNotificationListener : NotificationListenerService() {
     ) {
         try {
             val repository = TransactionRepository.getInstance(context)
-            repository.saveFromParsedTransaction(parsed)
-            println("DEBUG: Transaction saved to database")
+            val savedId = repository.saveFromParsedTransaction(parsed)
+            println("DEBUG: Transaction saved to database with ID: $savedId")
+
+            // Send notification for new transaction
+            val transaction = repository.getTransactionById(savedId)
+            if (transaction != null) {
+                notificationManager.sendTransactionNotification(transaction)
+                println("DEBUG: Transaction notification sent")
+            }
         } catch (e: Exception) {
             println("ERROR: Failed to save transaction: ${e.message}")
             e.printStackTrace()
@@ -139,6 +149,7 @@ class SmsNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        notificationManager = NotificationManager(applicationContext)
         println("DEBUG: SmsNotificationListener connected")
     }
 

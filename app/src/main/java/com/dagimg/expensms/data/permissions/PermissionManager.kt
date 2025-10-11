@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +25,13 @@ class PermissionManager(
             Manifest.permission.READ_SMS,
         )
 
+    val notificationPermissions =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            emptyArray()
+        }
+
     /**
      * Check if SMS permissions are granted
      */
@@ -31,6 +39,45 @@ class PermissionManager(
         smsPermissions.all { permission ->
             ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
         }
+
+    /**
+     * Check if notification permissions are granted
+     */
+    fun hasNotificationPermissions(): Boolean =
+        notificationPermissions.all { permission ->
+            ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
+        }
+
+    /**
+     * Request notification permissions
+     */
+    fun requestNotificationPermissions(
+        onGranted: () -> Unit,
+        onDenied: () -> Unit,
+    ) {
+        val permissionsToRequest =
+            notificationPermissions.filter { permission ->
+                ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED
+            }
+
+        if (permissionsToRequest.isEmpty()) {
+            onGranted()
+            return
+        }
+
+        // Show rationale if needed
+        if (shouldShowRationale(permissionsToRequest)) {
+            // TODO: Show rationale dialog
+            // For now, request directly
+        }
+
+        // Request permissions
+        ActivityCompat.requestPermissions(
+            activity,
+            permissionsToRequest.toTypedArray(),
+            NOTIFICATION_PERMISSION_REQUEST_CODE,
+        )
+    }
 
     /**
      * Request SMS permissions with rationale
@@ -121,6 +168,7 @@ class PermissionManager(
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
     }
 }
 
@@ -153,6 +201,41 @@ fun rememberSmsPermissionLauncher(
     return { shouldRequest ->
         if (shouldRequest) {
             launcher.launch(smsPermissions)
+        }
+    }
+}
+
+/**
+ * Composable for handling notification permissions
+ */
+@Composable
+fun rememberNotificationPermissionLauncher(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit,
+): (Boolean) -> Unit {
+    val notificationPermissions =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            emptyArray()
+        }
+
+    val launcher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+            onResult = { permissions ->
+                val allGranted = permissions.all { it.value }
+                if (allGranted) {
+                    onGranted()
+                } else {
+                    onDenied()
+                }
+            },
+        )
+
+    return { shouldRequest ->
+        if (shouldRequest) {
+            launcher.launch(notificationPermissions)
         }
     }
 }
