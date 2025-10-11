@@ -44,6 +44,11 @@ class SettingsViewModel(
             .getUserName()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "User")
 
+    val customCategories =
+        userPreferencesRepository
+            .getCustomCategories()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val theme =
         userPreferencesRepository
             .getTheme()
@@ -134,6 +139,12 @@ class SettingsViewModel(
                 println("ERROR: Failed to clear data: ${e.message}")
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun addCustomCategory(category: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.addCustomCategory(category)
         }
     }
 }

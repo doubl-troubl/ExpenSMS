@@ -8,7 +8,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * Repository for user preferences using DataStore
@@ -32,6 +35,8 @@ class UserPreferencesRepository(
         // Track if we've extracted a user name
         private val BALANCE_VISIBLE_KEY = booleanPreferencesKey("balance_visible")
         // Track if balance amounts are visible
+        private val CUSTOM_CATEGORIES_KEY = stringPreferencesKey("custom_categories")
+        // JSON string of custom categories
     }
 
     fun getSmsPermissionGranted(): Flow<Boolean> =
@@ -147,6 +152,30 @@ class UserPreferencesRepository(
         dataStore.edit { preferences ->
             preferences[BALANCE_VISIBLE_KEY] = visible
         }
+    }
+
+    fun getCustomCategories(): Flow<List<String>> =
+        dataStore.data
+            .map { preferences ->
+                val categoriesJson = preferences[CUSTOM_CATEGORIES_KEY] ?: "[]"
+                try {
+                    Json.decodeFromString<List<String>>(categoriesJson)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            }
+
+    suspend fun setCustomCategories(categories: List<String>) {
+        val categoriesJson = Json.encodeToString(categories)
+        dataStore.edit { preferences ->
+            preferences[CUSTOM_CATEGORIES_KEY] = categoriesJson
+        }
+    }
+
+    suspend fun addCustomCategory(category: String) {
+        val currentCategories = getCustomCategories().first()
+        val updatedCategories = (currentCategories + category).distinct() // Avoid duplicates
+        setCustomCategories(updatedCategories)
     }
 }
 

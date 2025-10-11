@@ -40,6 +40,13 @@ fun TransactionsScreen(
     val transactions by repository.transactions.collectAsState(initial = emptyList())
     val availableBanks by repository.availableBanks.collectAsState(initial = emptyList())
 
+    // Get custom categories from SettingsViewModel
+    val settingsViewModel: com.dagimg.expensms.ui.viewmodel.SettingsViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel {
+            com.dagimg.expensms.ui.viewmodel.SettingsViewModel(context.applicationContext as android.app.Application)
+        }
+    val customCategories by settingsViewModel.customCategories.collectAsState()
+
     // Define filter options
     val categoryOptions =
         listOf(
@@ -301,6 +308,10 @@ fun TransactionsScreen(
     if (showEditDialog && selectedTransaction != null) {
         TransactionEditDialog(
             transaction = selectedTransaction!!,
+            customCategories = customCategories,
+            onAddCustomCategory = { category ->
+                settingsViewModel.addCustomCategory(category)
+            },
             onDismiss = {
                 showEditDialog = false
                 selectedTransaction = null

@@ -27,6 +27,8 @@ import java.util.*
 @Composable
 fun TransactionEditDialog(
     transaction: Transaction,
+    customCategories: List<String> = emptyList(),
+    onAddCustomCategory: (String) -> Unit = {},
     onDismiss: () -> Unit,
     onSave: (Transaction) -> Unit,
 ) {
@@ -34,21 +36,21 @@ fun TransactionEditDialog(
     var selectedCategory by remember { mutableStateOf(transaction.category) }
     var note by remember { mutableStateOf(transaction.note) }
     var isMerchantNameValid by remember { mutableStateOf(true) }
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
 
-    val categoryOptions =
-        listOf(
-            "Income",
-            "Groceries",
-            "Food & Drink",
-            "Transport",
-            "Shopping",
-            "Entertainment",
-            "Bills & Utilities",
-            "Healthcare",
-            "Education",
-            "Travel",
-            "Other",
-        )
+    val categoryOptions = listOf("+ Add Category") + listOf(
+        "Income",
+        "Groceries",
+        "Food & Drink",
+        "Transport",
+        "Shopping",
+        "Entertainment",
+        "Bills & Utilities",
+        "Healthcare",
+        "Education",
+        "Travel",
+        "Other",
+    ) + customCategories
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -175,7 +177,11 @@ fun TransactionEditDialog(
                                 DropdownMenuItem(
                                     text = { Text(category) },
                                     onClick = {
-                                        selectedCategory = category
+                                        if (category == "+ Add Category") {
+                                            showAddCategoryDialog = true
+                                        } else {
+                                            selectedCategory = category
+                                        }
                                         expanded = false
                                     },
                                 )
@@ -268,6 +274,18 @@ fun TransactionEditDialog(
                 }
             }
         }
+    }
+
+    // Add Category Dialog
+    if (showAddCategoryDialog) {
+        AddCategoryDialog(
+            onDismiss = { showAddCategoryDialog = false },
+            onSave = { newCategory ->
+                onAddCustomCategory(newCategory)
+                selectedCategory = newCategory
+                showAddCategoryDialog = false
+            }
+        )
     }
 }
 
@@ -370,6 +388,127 @@ private fun formatTransactionDate(timestamp: Long): String {
         else -> {
             val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
             dateFormat.format(Date(timestamp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddCategoryDialog(
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var categoryName by remember { mutableStateOf("") }
+    var isCategoryNameValid by remember { mutableStateOf(true) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.lg),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.Card),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+            ) {
+                // Header
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                ) {
+                    Text(
+                        text = "Add New Category",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.Foreground,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        text = "Create a custom category for your transactions",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppColors.MutedForeground,
+                        fontSize = 14.sp,
+                    )
+                }
+
+                // Category Name Field
+                OutlinedTextField(
+                    value = categoryName,
+                    onValueChange = {
+                        categoryName = it
+                        isCategoryNameValid = it.isNotBlank()
+                    },
+                    label = {
+                        Text(
+                            "Category Name",
+                            color = AppColors.Foreground,
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            "Enter category name...",
+                            color = AppColors.MutedForeground,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AppColors.Primary,
+                        unfocusedBorderColor = if (isCategoryNameValid) AppColors.Border else Color.Red,
+                        focusedContainerColor = AppColors.Card,
+                        unfocusedContainerColor = AppColors.Card,
+                        cursorColor = AppColors.Primary,
+                    ),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    isError = !isCategoryNameValid,
+                    supportingText = if (!isCategoryNameValid) {
+                        { Text("Category name is required", color = Color.Red) }
+                    } else null,
+                    singleLine = true,
+                )
+
+                // Actions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                ) {
+                    // Cancel Button
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = AppColors.Foreground,
+                        ),
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    // Save Button
+                    Button(
+                        onClick = {
+                            if (categoryName.isNotBlank()) {
+                                onSave(categoryName.trim())
+                            } else {
+                                isCategoryNameValid = false
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppColors.Primary,
+                            contentColor = AppColors.Card,
+                        ),
+                        enabled = categoryName.isNotBlank(),
+                    ) {
+                        Text("Add Category")
+                    }
+                }
+            }
         }
     }
 }

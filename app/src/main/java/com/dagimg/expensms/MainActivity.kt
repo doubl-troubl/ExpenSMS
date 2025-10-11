@@ -33,9 +33,10 @@ import com.dagimg.expensms.ui.theme.AppTypography
 import com.dagimg.expensms.ui.theme.LocalAppTheme
 import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
 import com.dagimg.expensms.ui.viewmodel.SplashViewModel
+import androidx.core.net.toUri
 
 class MainActivity : FragmentActivity() {
-    fun updateSystemBarsTheme(isDarkTheme: Boolean) {
+    private fun updateSystemBarsTheme(isDarkTheme: Boolean) {
         val window = window
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
@@ -62,7 +63,7 @@ class MainActivity : FragmentActivity() {
 
     private fun openUrl(url: String) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
             startActivity(intent)
         } catch (e: Exception) {
             // Handle error - could show a toast or log
@@ -283,7 +284,7 @@ private fun FragmentActivity.ExpenSMSApp(
                         Box(modifier = Modifier.padding(innerPadding)) {
                             TransactionsScreen(
                                 repository = transactionRepository,
-                                onTransactionClick = { _transaction ->
+                                onTransactionClick = {
                                     // TODO: Open transaction edit dialog
                                 },
                                 onLinkClick = onOpenUrl,

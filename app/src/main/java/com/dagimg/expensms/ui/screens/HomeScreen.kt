@@ -60,6 +60,13 @@ fun HomeScreen(
     val recentTransactions by homeViewModel.recentTransactionsState.collectAsState()
     val balanceVisible by homeViewModel.balanceVisible.collectAsState()
 
+    // Get custom categories from SettingsViewModel
+    val settingsViewModel: com.dagimg.expensms.ui.viewmodel.SettingsViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel {
+            com.dagimg.expensms.ui.viewmodel.SettingsViewModel(context.applicationContext as android.app.Application)
+        }
+    val customCategories by settingsViewModel.customCategories.collectAsState()
+
     // Create list of cards (Total + Individual banks)
     val allCards =
         remember(totalBalance, banks) {
@@ -136,6 +143,10 @@ fun HomeScreen(
     if (showEditDialog && selectedTransaction != null) {
         TransactionEditDialog(
             transaction = selectedTransaction!!,
+            customCategories = customCategories,
+            onAddCustomCategory = { category ->
+                settingsViewModel.addCustomCategory(category)
+            },
             onDismiss = {
                 showEditDialog = false
                 selectedTransaction = null
