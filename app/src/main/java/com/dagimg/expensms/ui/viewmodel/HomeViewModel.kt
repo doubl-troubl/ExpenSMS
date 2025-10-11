@@ -1,31 +1,37 @@
 package com.dagimg.expensms.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.dagimg.expensms.data.dummy.DummyData
-import com.dagimg.expensms.data.model.Bank
-import com.dagimg.expensms.data.model.Transaction
+import androidx.lifecycle.viewModelScope
+import com.dagimg.expensms.data.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class HomeViewModel : ViewModel() {
-    // State for balance cards
-    private val _balanceCardsState = MutableStateFlow<List<Bank>>(emptyList())
-    val balanceCardsState: StateFlow<List<Bank>> = _balanceCardsState.asStateFlow()
+    private val transactionRepository = TransactionRepository.instance
+
+    // State for balance cards - derived from transaction data
+    val balanceCardsState =
+        transactionRepository.balanceCards
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // State for recent transactions
-    private val _recentTransactionsState = MutableStateFlow<List<Transaction>>(emptyList())
-    val recentTransactionsState: StateFlow<List<Transaction>> = _recentTransactionsState.asStateFlow()
+    val recentTransactionsState =
+        transactionRepository.recentTransactions
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // State for total balance
-    private val _totalBalance = MutableStateFlow(0.0)
-    val totalBalance: StateFlow<Double> = _totalBalance.asStateFlow()
+    // State for total balance across all banks
+    val totalBalance =
+        transactionRepository.totalBalance
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // State for user name
-    private val _userName = MutableStateFlow("Alex")
+    // State for user name (could be made configurable later)
+    private val _userName = MutableStateFlow("User")
     val userName: StateFlow<String> = _userName.asStateFlow()
 
     // State for current date
@@ -33,15 +39,8 @@ class HomeViewModel : ViewModel() {
     val currentDate: StateFlow<String> = _currentDate.asStateFlow()
 
     init {
-        loadData()
+        println("DEBUG: HomeViewModel initialized")
         updateCurrentDate()
-    }
-
-    private fun loadData() {
-        // Load dummy data
-        _balanceCardsState.value = DummyData.banks
-        _recentTransactionsState.value = DummyData.recentTransactions
-        _totalBalance.value = DummyData.totalBalance
     }
 
     private fun updateCurrentDate() {
@@ -50,7 +49,14 @@ class HomeViewModel : ViewModel() {
     }
 
     fun refreshData() {
-        loadData()
+        println("DEBUG: HomeViewModel.refreshData() called")
         updateCurrentDate()
+        // Transaction data is automatically updated through Flow
+
+        // Debug current state
+        println("DEBUG: Current state check:")
+        println("DEBUG: - balanceCardsState: ${balanceCardsState.value.size} cards")
+        println("DEBUG: - recentTransactionsState: ${recentTransactionsState.value.size} transactions")
+        println("DEBUG: - totalBalance: ${totalBalance.value}")
     }
 }

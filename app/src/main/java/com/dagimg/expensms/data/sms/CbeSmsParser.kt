@@ -11,38 +11,58 @@ import kotlin.text.Regex
  */
 class CbeSmsParser : BankSmsParser {
     override val bankName = "Commercial Bank of Ethiopia"
-    override val senderIds = listOf("CBE", "CBE-ET", "CBEBIRR")
+    override val senderIds = listOf("CBE", "CBE-ET", "CBEBIRR", "+251936744962")
 
-    // Regex patterns for CBE SMS format
-    private val balanceRegex = Regex("Your Current Balance is ETB ([\\d,]+\\.?\\d*)")
-    private val creditRegex = Regex("credited with ETB ([\\d,]+\\.?\\d*)")
-    private val totalAmountRegex = Regex("total of ETB([\\d,]+\\.?\\d*)")
-    private val debitRegex = Regex("debited with ETB([\\d,]+\\.?\\d*)")
-    private val merchantRegex = Regex("transfered ETB [\\d,]+\\.?\\d* to ([^\\n]+?) on")
-    private val dateRegex = Regex("on (\\d{2}/\\d{2}/\\d{4})")
-    private val urlRegex = Regex("(https://[^\\s]+)")
+    // Regex patterns for CBE SMS format (case insensitive)
+    private val balanceRegex = Regex("Your Current Balance is ETB ([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE)
+    private val creditRegex = Regex("credited with ETB ([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE)
+    private val totalAmountRegex = Regex("total of ETB([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE)
+    private val debitRegex = Regex("debited with ETB([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE)
+
+    private val merchantRegex = Regex("transfered ETB [\\d,]+\\.?\\d* to ([^\\n]+?) on", RegexOption.IGNORE_CASE)
+    private val dateRegex = Regex("on (\\d{2}/\\d{2}/\\d{4})", RegexOption.IGNORE_CASE)
+    private val urlRegex = Regex("(https://[^\\s]+)", RegexOption.IGNORE_CASE)
 
     override fun canParse(
         sender: String,
         message: String,
     ): Boolean =
         senderIds.any { sender.contains(it, ignoreCase = true) } &&
-            message.contains("Your Current Balance is ETB")
+            message.contains("Your Current Balance is ETB", ignoreCase = true)
 
     override fun parse(
         sender: String,
         message: String,
     ): ParsedTransaction? {
+        println("DEBUG: CbeSmsParser.parse() called with sender='$sender', message='$message'")
         try {
             // Extract balance (required field)
-            val balance = extractBalance(message) ?: return null
+            val balance = extractBalance(message)
+            println("DEBUG: Extracted balance: $balance")
+            if (balance == null) {
+                println("DEBUG: Failed to extract balance, returning null")
+                return null
+            }
 
             // Determine transaction type
             val type =
                 when {
-                    message.contains("credited") -> TransactionType.INCOME
-                    message.contains("debited") || message.contains("transfered") -> TransactionType.EXPENSE
-                    else -> return null
+                    message.contains("credited", ignoreCase = true) -> {
+                        println("DEBUG: Detected INCOME transaction")
+                        TransactionType.INCOME
+                    }
+                    message.contains(
+                        "debited",
+                        ignoreCase = true,
+                    ) ||
+                        message.contains("transfered", ignoreCase = true) -> {
+                        println("DEBUG: Detected EXPENSE transaction")
+                        TransactionType.EXPENSE
+                    }
+                    else -> {
+                        println("DEBUG: Could not determine transaction type, returning null")
+                        return null
+                    }
                 }
 
             // Extract amount based on type
@@ -50,12 +70,21 @@ class CbeSmsParser : BankSmsParser {
                 when (type) {
                     TransactionType.INCOME -> extractCreditAmount(message)
                     TransactionType.EXPENSE -> extractDebitAmount(message)
-                } ?: return null
+                }
+            println("DEBUG: Extracted amount: $amount")
+            if (amount == null) {
+                println("DEBUG: Failed to extract amount, returning null")
+                return null
+            }
 
             // Extract optional fields
             val merchant = extractMerchant(message) ?: "Unknown"
             val timestamp = extractDate(message) ?: System.currentTimeMillis()
             val url = extractUrl(message)
+
+            println(
+                "DEBUG: Parsed transaction - merchant: '$merchant', amount: $amount, type: $type, balance: $balance",
+            )
 
             return ParsedTransaction(
                 merchant = merchant,
@@ -69,43 +98,62 @@ class CbeSmsParser : BankSmsParser {
             )
         } catch (e: Exception) {
             // Log error and return null
+            println("DEBUG: Exception during parsing: ${e.message}")
+            e.printStackTrace()
             return null
         }
     }
 
-    private fun extractBalance(message: String): Double? =
-        balanceRegex
-            .find(message)
-            ?.groupValues
-            ?.get(1)
-            ?.replace(",", "")
-            ?.toDoubleOrNull()
+    private fun extractBalance(message: String): Double? {
+        val result =
+            balanceRegex
+                .find(message)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(",", "")
+                ?.toDoubleOrNull()
+        println("DEBUG: extractBalance('$message') = $result")
+        return result
+    }
 
-    private fun extractCreditAmount(message: String): Double? =
-        creditRegex
-            .find(message)
-            ?.groupValues
-            ?.get(1)
-            ?.replace(",", "")
-            ?.toDoubleOrNull()
+    private fun extractCreditAmount(message: String): Double? {
+        val result =
+            creditRegex
+                .find(message)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(",", "")
+                ?.toDoubleOrNull()
+        println("DEBUG: extractCreditAmount('$message') = $result")
+        return result
+    }
 
     private fun extractDebitAmount(message: String): Double? {
         // Prioritize "total" amount (includes fees)
-        totalAmountRegex
-            .find(message)
-            ?.groupValues
-            ?.get(1)
-            ?.replace(",", "")
-            ?.toDoubleOrNull()
-            ?.let { return it }
+        val totalResult =
+            totalAmountRegex
+                .find(message)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(",", "")
+                ?.toDoubleOrNull()
+
+        if (totalResult != null) {
+            println("DEBUG: extractDebitAmount('$message') - using total amount: $totalResult")
+            return totalResult
+        }
 
         // Fallback to initial debit amount
-        return debitRegex
-            .find(message)
-            ?.groupValues
-            ?.get(1)
-            ?.replace(",", "")
-            ?.toDoubleOrNull()
+        val debitResult =
+            debitRegex
+                .find(message)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(",", "")
+                ?.toDoubleOrNull()
+
+        println("DEBUG: extractDebitAmount('$message') - using debit amount: $debitResult")
+        return debitResult
     }
 
     private fun extractMerchant(message: String): String? =

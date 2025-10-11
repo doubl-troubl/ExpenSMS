@@ -4,10 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
+import com.dagimg.expensms.data.repository.TransactionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-// import com.dagimg.expensms.data.repository.TransactionRepository // TODO: Implement when database is ready
 
 /**
  * Broadcast receiver for incoming SMS messages
@@ -26,24 +27,49 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
     ) {
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+            println("DEBUG: Received ${messages.size} SMS messages")
+
+            // Combine multi-part messages from the same sender
+            val combinedMessages = mutableMapOf<String, StringBuilder>()
 
             for (sms in messages) {
                 val sender = sms.displayOriginatingAddress ?: continue
                 val message = sms.messageBody ?: continue
 
+                println("DEBUG: SMS from '$sender': '$message'")
+
+                combinedMessages.getOrPut(sender) { StringBuilder() }.append(message)
+            }
+
+            // Process combined messages
+            for ((sender, messageBuilder) in combinedMessages) {
+                val fullMessage = messageBuilder.toString()
+                println("DEBUG: Combined message from '$sender': '$fullMessage'")
+
                 // Only process if sender matches supported banks
-                if (parserRegistry.getAllSenderIds().any { sender.contains(it, ignoreCase = true) }) {
+                val supportedSenders = parserRegistry.getAllSenderIds()
+                println("DEBUG: Supported senders: $supportedSenders")
+
+                val isSupported = supportedSenders.any { sender.contains(it, ignoreCase = true) }
+                println("DEBUG: Is sender '$sender' supported? $isSupported")
+
+                if (isSupported) {
                     // Try to parse with registered parsers
-                    val parsed = parserRegistry.parseTransaction(sender, message)
+                    val parsed = parserRegistry.parseTransaction(sender, fullMessage)
+                    println("DEBUG: Parsed transaction: $parsed")
 
                     if (parsed != null) {
                         // Save to database in background
                         CoroutineScope(Dispatchers.IO).launch {
                             saveTransaction(context, parsed)
                         }
+                    } else {
+                        println("DEBUG: Failed to parse SMS from '$sender'")
                     }
                 }
             }
+        } else {
+            println("DEBUG: Received intent with action: ${intent.action}")
         }
     }
 
@@ -52,12 +78,18 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
         parsed: ParsedTransaction,
     ) {
         try {
-            // TODO: Get TransactionRepository instance and save the transaction
-            // For now, just log the parsed transaction
-            println("Parsed transaction: $parsed")
+            println("DEBUG: Saving transaction: $parsed")
+            val repository = TransactionRepository.instance
+            val transactionId = repository.addTransaction(parsed)
+            println("DEBUG: Saved transaction with ID: $transactionId from ${parsed.bankName}")
+
+            // Print current repository state
+            val currentTransactions = repository.transactions.first()
+            println("DEBUG: Total transactions in repository: ${currentTransactions.size}")
         } catch (e: Exception) {
             // Handle error - could show a toast or log
-            println("Error saving transaction: ${e.message}")
+            println("DEBUG: Error saving transaction: ${e.message}")
+            e.printStackTrace()
         }
     }
 }

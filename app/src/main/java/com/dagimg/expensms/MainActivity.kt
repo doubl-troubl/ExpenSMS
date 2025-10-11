@@ -13,15 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dagimg.expensms.data.biometric.BiometricAuthManager
-import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
-import kotlinx.coroutines.launch
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dagimg.expensms.data.biometric.BiometricAuthManager
 import com.dagimg.expensms.ui.navigation.NavigationItem
 import com.dagimg.expensms.ui.navigation.navigationItems
 import com.dagimg.expensms.ui.screens.HomeScreen
@@ -29,6 +27,7 @@ import com.dagimg.expensms.ui.screens.SettingsScreen
 import com.dagimg.expensms.ui.screens.TransactionsScreen
 import com.dagimg.expensms.ui.theme.AppTypography
 import com.dagimg.expensms.ui.theme.LightColors
+import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,9 +55,10 @@ class MainActivity : FragmentActivity() {
 @Composable
 private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val settingsViewModel: SettingsViewModel = viewModel {
-        SettingsViewModel(context.applicationContext as android.app.Application)
-    }
+    val settingsViewModel: SettingsViewModel =
+        viewModel {
+            SettingsViewModel(context.applicationContext as android.app.Application)
+        }
     val biometricManager = remember { BiometricAuthManager(context) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -87,11 +87,11 @@ private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
     if (!authenticationChecked) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CircularProgressIndicator()
                 Text("Checking authentication...")
@@ -105,7 +105,7 @@ private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
     if (biometricEnabled && !isAuthenticated) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text("Authentication required")
         }
