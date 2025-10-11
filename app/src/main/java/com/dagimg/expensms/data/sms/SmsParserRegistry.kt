@@ -42,4 +42,9 @@ class SmsParserRegistry {
      * Get all supported sender IDs
      */
     fun getAllSenderIds(): List<String> = parsers.flatMap { it.senderIds }
+
+    /**
+     * Get all registered parsers (for CLI/testing purposes)
+     */
+    fun getAllParsers(): List<BankSmsParser> = parsers.toList()
 }

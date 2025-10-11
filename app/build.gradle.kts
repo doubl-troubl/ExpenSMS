@@ -6,6 +6,29 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
 }
 
+// Custom task for running CLI without conflicting with Android plugin
+tasks.register<JavaExec>("runCli") {
+    group = "application"
+    description = "Run the SMS Parser CLI"
+
+    dependsOn("compileDebugKotlin")
+
+    // Use the compiled classes and runtime classpath
+    classpath =
+        files(
+            "${project.buildDir}/tmp/kotlin-classes/debug",
+            configurations["debugRuntimeClasspath"],
+        )
+
+    mainClass.set("com.dagimg.expensms.SmsParserCLIKt")
+
+    // Pass command line arguments from --args
+    val argsString = project.properties["args"] as? String ?: ""
+    if (argsString.isNotEmpty()) {
+        args(*argsString.split(" ").toTypedArray())
+    }
+}
+
 android {
     namespace = "com.dagimg.expensms"
     compileSdk = 36

@@ -106,6 +106,11 @@ taglogs:
 force-stop:
 	$(ADB) shell am force-stop $(PKG_NAME)
 
+# SMS Parser CLI - pass arguments after the target
+# Usage: make cli ARGS="--help" or make cli ARGS="cbe \"SMS text here\""
+cli:
+	$(GRADLE_WRAPPER) :app:runCli --args="$(ARGS)"
+
 # Add this new combined target for fastest development workflow:
 dev:
 	@echo "Installing app..."
