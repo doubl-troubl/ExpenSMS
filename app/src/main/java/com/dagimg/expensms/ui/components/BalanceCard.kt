@@ -13,7 +13,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dagimg.expensms.data.model.Bank
@@ -27,7 +26,7 @@ fun BalanceCard(
     bank: Bank,
     isTotal: Boolean = false,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
+    _onClick: () -> Unit = {},
 ) {
     val accentColor =
         if (isTotal) {
@@ -131,7 +130,7 @@ fun BalanceCard(
 fun TotalBalanceCard(
     totalBalance: Double,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
+    _onClick: () -> Unit = {},
 ) {
     Box(
         modifier =
@@ -212,4 +211,3 @@ private fun formatCurrency(amount: Double): String {
     val formatter = NumberFormat.getCurrencyInstance(Locale.US)
     return formatter.format(amount)
 }
-
