@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dagimg.expensms.data.model.Bank
 import com.dagimg.expensms.data.model.Transaction
 import com.dagimg.expensms.ui.components.BalanceCard
+import com.dagimg.expensms.ui.components.ThemeToggleButton
 import com.dagimg.expensms.ui.components.TotalBalanceCard
 import com.dagimg.expensms.ui.components.TransactionItem
 import com.dagimg.expensms.ui.theme.*
@@ -33,6 +34,7 @@ fun HomeScreen(
     onTransactionClick: (Transaction) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
     onLinkClick: (String) -> Unit = {},
+    onThemeChange: (String) -> Unit = {},
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val homeViewModel: HomeViewModel =
@@ -77,6 +79,7 @@ fun HomeScreen(
             HomeHeader(
                 userName = userName,
                 currentDate = currentDate,
+                onThemeChange = onThemeChange,
                 modifier = Modifier.padding(horizontal = Spacing.lg),
             )
         }
@@ -117,25 +120,38 @@ fun HomeScreen(
 private fun HomeHeader(
     userName: String,
     currentDate: String,
+    onThemeChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = "Hi, $userName",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = LightColors.Foreground,
-            fontSize = 24.sp,
+        // Theme Toggle Button on the left
+        ThemeToggleButton(
+            onThemeChange = onThemeChange,
         )
-        Text(
-            text = currentDate,
-            style = MaterialTheme.typography.bodyMedium,
-            color = LightColors.MutedForeground,
-            fontSize = 14.sp,
-        )
+
+        // Greeting and Date on the right
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+        ) {
+            Text(
+                text = "Hi, $userName",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.Foreground,
+                fontSize = 24.sp,
+            )
+            Text(
+                text = currentDate,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.MutedForeground,
+                fontSize = 14.sp,
+            )
+        }
     }
 }
 
@@ -198,9 +214,9 @@ private fun PagerIndicators(
                         .clip(RoundedCornerShape(4.dp))
                         .background(
                             if (isActive) {
-                                LightColors.Foreground
+                                AppColors.Foreground
                             } else {
-                                LightColors.MutedForeground.copy(alpha = 0.25f)
+                                AppColors.MutedForeground.copy(alpha = 0.25f)
                             },
                         ),
             )
@@ -222,7 +238,7 @@ private fun RecentTransactionsHeader(
             text = "Recent Transactions",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Medium,
-            color = LightColors.Foreground,
+            color = AppColors.Foreground,
             fontSize = 20.sp,
         )
 
@@ -232,7 +248,7 @@ private fun RecentTransactionsHeader(
             Text(
                 text = "See All",
                 style = MaterialTheme.typography.bodyMedium,
-                color = LightColors.Primary,
+                color = AppColors.Primary,
                 fontSize = 14.sp,
             )
         }

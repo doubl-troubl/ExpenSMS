@@ -57,6 +57,12 @@ class UserPreferencesRepository(
                 preferences[USER_EMAIL_KEY] ?: ""
             }
 
+    fun getTheme(): Flow<String> =
+        dataStore.data
+            .map { preferences ->
+                preferences[THEME_KEY] ?: "light"
+            }
+
     suspend fun setSmsPermission(granted: Boolean) {
         dataStore.edit { preferences ->
             preferences[SMS_PERMISSION_KEY] = granted
@@ -84,6 +90,12 @@ class UserPreferencesRepository(
     suspend fun setUserEmail(email: String) {
         dataStore.edit { preferences ->
             preferences[USER_EMAIL_KEY] = email
+        }
+    }
+
+    suspend fun setTheme(theme: String) {
+        dataStore.edit { preferences ->
+            preferences[THEME_KEY] = theme
         }
     }
 }

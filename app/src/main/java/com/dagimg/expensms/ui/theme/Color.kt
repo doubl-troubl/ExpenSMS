@@ -1,9 +1,110 @@
 package com.dagimg.expensms.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 
+// Theme state management
+enum class AppTheme {
+    LIGHT,
+    DARK,
+}
+
+val LocalAppTheme = compositionLocalOf<AppTheme> { AppTheme.LIGHT }
+
+// Unified Colors object that automatically routes based on current theme
+object AppColors {
+    val Background: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Background
+                AppTheme.DARK -> DarkColors.Background
+            }
+
+    val Foreground: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Foreground
+                AppTheme.DARK -> DarkColors.Foreground
+            }
+
+    val Card: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Card
+                AppTheme.DARK -> DarkColors.Card
+            }
+
+    val Muted: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Muted
+                AppTheme.DARK -> DarkColors.Muted
+            }
+
+    val MutedForeground: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.MutedForeground
+                AppTheme.DARK -> DarkColors.MutedForeground
+            }
+
+    val Accent: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Accent
+                AppTheme.DARK -> DarkColors.Accent
+            }
+
+    val Border: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Border
+                AppTheme.DARK -> DarkColors.Border
+            }
+
+    val Primary: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> LightColors.Primary
+                AppTheme.DARK -> DarkColors.Primary
+            }
+}
+
+// Transaction colors that route based on theme
+object AppTransactionColors {
+    val Income: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> TransactionColors.IncomeLight
+                AppTheme.DARK -> TransactionColors.IncomeDark
+            }
+
+    val Expense: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> TransactionColors.ExpenseLight
+                AppTheme.DARK -> TransactionColors.ExpenseDark
+            }
+
+    val IncomeBackground: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> TransactionColors.IncomeBackgroundLight
+                AppTheme.DARK -> TransactionColors.IncomeBackgroundDark
+            }
+
+    val ExpenseBackground: Color
+        @Composable get() =
+            when (LocalAppTheme.current) {
+                AppTheme.LIGHT -> TransactionColors.ExpenseBackgroundLight
+                AppTheme.DARK -> TransactionColors.ExpenseBackgroundDark
+            }
+}
+
 // Light Theme Colors
-object LightColors {
+private object LightColors {
     val Background = Color(0xFFFFFFFF) // rgb(255, 255, 255)
     val Foreground = Color(0xFF1A1A1A) // rgb(26, 26, 26)
     val Card = Color(0xFFFFFFFF) // rgb(255, 255, 255)
@@ -15,7 +116,7 @@ object LightColors {
 }
 
 // Dark Theme Colors
-object DarkColors {
+private object DarkColors {
     val Background = Color(0xFF1A1A1A) // rgb(26, 26, 26)
     val Foreground = Color(0xFFFAFAFA) // rgb(250, 250, 250)
     val Card = Color(0xFF1A1A1A) // rgb(26, 26, 26)

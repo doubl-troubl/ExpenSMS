@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dagimg.expensms.ui.theme.LightColors
+import com.dagimg.expensms.ui.theme.AppColors
 import com.dagimg.expensms.ui.theme.Spacing
 
 @Composable
@@ -51,7 +51,7 @@ fun SettingItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = LightColors.Foreground,
+                color = AppColors.Foreground,
                 fontSize = 16.sp,
             )
 
@@ -60,7 +60,7 @@ fun SettingItem(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = LightColors.MutedForeground,
+                color = AppColors.MutedForeground,
                 fontSize = 14.sp,
             )
         }
@@ -74,7 +74,7 @@ fun SettingItem(
                     androidx.compose.ui.res
                         .painterResource(id = android.R.drawable.ic_media_next),
                 contentDescription = "Navigate",
-                tint = LightColors.MutedForeground,
+                tint = AppColors.MutedForeground,
                 modifier = Modifier.size(20.dp),
             )
         }

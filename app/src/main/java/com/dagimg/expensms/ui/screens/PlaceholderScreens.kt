@@ -7,7 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.dagimg.expensms.ui.theme.LightColors
+import com.dagimg.expensms.ui.theme.AppColors
 import com.dagimg.expensms.ui.theme.Spacing
 
 @Composable
@@ -24,7 +24,7 @@ fun TransactionsScreen(modifier: Modifier = Modifier) {
             text = "Transactions",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
-            color = LightColors.Foreground,
+            color = AppColors.Foreground,
             fontSize = 24.sp,
         )
 
@@ -33,7 +33,7 @@ fun TransactionsScreen(modifier: Modifier = Modifier) {
         Text(
             text = "Coming Soon...",
             style = MaterialTheme.typography.bodyLarge,
-            color = LightColors.MutedForeground,
+            color = AppColors.MutedForeground,
             fontSize = 16.sp,
         )
     }

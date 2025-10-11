@@ -40,7 +40,7 @@ fun TransactionItem(
         shape = Shapes.medium,
         colors =
             CardDefaults.cardColors(
-                containerColor = LightColors.Card,
+                containerColor = AppColors.Card,
             ),
         elevation =
             CardDefaults.cardElevation(
@@ -71,7 +71,7 @@ fun TransactionItem(
                     text = transaction.merchant,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    color = LightColors.Foreground,
+                    color = AppColors.Foreground,
                     fontSize = 16.sp,
                 )
 
@@ -86,7 +86,7 @@ fun TransactionItem(
                             append(transaction.bankName)
                         },
                     style = MaterialTheme.typography.bodySmall,
-                    color = LightColors.MutedForeground,
+                    color = AppColors.MutedForeground,
                     fontSize = 12.sp,
                 )
             }
@@ -100,7 +100,7 @@ fun TransactionItem(
                     Icon(
                         imageVector = Icons.Default.Link,
                         contentDescription = "View Receipt",
-                        tint = LightColors.MutedForeground,
+                        tint = AppColors.MutedForeground,
                         modifier = Modifier.size(16.dp),
                     )
                 }
@@ -127,15 +127,15 @@ fun TransactionTypeIcon(
         when (type) {
             TransactionType.INCOME ->
                 Triple(
-                    TransactionColors.IncomeBackgroundLight,
+                    AppTransactionColors.IncomeBackground,
                     Icons.Default.ArrowDownward,
-                    TransactionColors.IncomeLight,
+                    AppTransactionColors.Income,
                 )
             TransactionType.EXPENSE ->
                 Triple(
-                    TransactionColors.ExpenseBackgroundLight,
+                    AppTransactionColors.ExpenseBackground,
                     Icons.Default.ArrowUpward,
-                    TransactionColors.ExpenseLight,
+                    AppTransactionColors.Expense,
                 )
         }
 
@@ -156,10 +156,11 @@ fun TransactionTypeIcon(
     }
 }
 
+@Composable
 private fun getTransactionColor(type: TransactionType): Color =
     when (type) {
-        TransactionType.INCOME -> TransactionColors.IncomeLight
-        TransactionType.EXPENSE -> TransactionColors.ExpenseLight
+        TransactionType.INCOME -> AppTransactionColors.Income
+        TransactionType.EXPENSE -> AppTransactionColors.Expense
     }
 
 private fun formatTransactionAmount(

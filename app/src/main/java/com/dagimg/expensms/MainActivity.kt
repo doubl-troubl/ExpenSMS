@@ -25,8 +25,10 @@ import com.dagimg.expensms.ui.navigation.navigationItems
 import com.dagimg.expensms.ui.screens.HomeScreen
 import com.dagimg.expensms.ui.screens.SettingsScreen
 import com.dagimg.expensms.ui.screens.TransactionsScreen
+import com.dagimg.expensms.ui.theme.AppColors
+import com.dagimg.expensms.ui.theme.AppTheme
 import com.dagimg.expensms.ui.theme.AppTypography
-import com.dagimg.expensms.ui.theme.LightColors
+import com.dagimg.expensms.ui.theme.LocalAppTheme
 import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
 
 class MainActivity : FragmentActivity() {
@@ -64,6 +66,7 @@ private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
 
     // Check if biometric authentication is required
     val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
+    val currentTheme by settingsViewModel.theme.collectAsState()
     var isAuthenticated by remember { mutableStateOf(false) }
     var authenticationChecked by remember { mutableStateOf(false) }
 
@@ -113,90 +116,118 @@ private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
     }
 
     val navController = rememberNavController()
+    val appTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
 
-    MaterialTheme(
-        typography = AppTypography,
-        colorScheme =
-            lightColorScheme(
-                primary = LightColors.Primary,
-                surface = LightColors.Card,
-                background = LightColors.Background,
-            ),
-    ) {
-        Scaffold(
-            bottomBar = {
-                NavigationBar(
-                    containerColor = LightColors.Card,
-                    contentColor = LightColors.Foreground,
-                ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
+    CompositionLocalProvider(LocalAppTheme provides appTheme) {
+        MaterialTheme(
+            typography = AppTypography,
+            colorScheme =
+                if (appTheme == AppTheme.DARK) {
+                    darkColorScheme(
+                        primary = androidx.compose.ui.graphics.Color.White,
+                        surface =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                        background =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                        onSurface = androidx.compose.ui.graphics.Color.White,
+                        onBackground = androidx.compose.ui.graphics.Color.White,
+                    )
+                } else {
+                    lightColorScheme(
+                        primary =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF030213),
+                        surface = androidx.compose.ui.graphics.Color.White,
+                        background = androidx.compose.ui.graphics.Color.White,
+                        onSurface =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                        onBackground =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                    )
+                },
+        ) {
+            Scaffold(
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = AppColors.Card,
+                        contentColor = AppColors.Foreground,
+                    ) {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
 
-                    navigationItems.forEach { item ->
-                        val isSelected =
-                            currentDestination?.hierarchy?.any {
-                                it.route == item.route
-                            } == true
+                        navigationItems.forEach { item ->
+                            val isSelected =
+                                currentDestination?.hierarchy?.any {
+                                    it.route == item.route
+                                } == true
 
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.title,
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            },
-                            selected = isSelected,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.title,
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item.title,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                },
+                                selected = isSelected,
+                                onClick = {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                },
+                                colors =
+                                    NavigationBarItemDefaults.colors(
+                                        selectedIconColor = AppColors.Primary,
+                                        selectedTextColor = AppColors.Primary,
+                                        unselectedIconColor = AppColors.MutedForeground,
+                                        unselectedTextColor = AppColors.MutedForeground,
+                                        indicatorColor = AppColors.Primary.copy(alpha = 0.1f),
+                                    ),
+                            )
+                        }
+                    }
+                },
+            ) { innerPadding ->
+                NavHost(
+                    navController = navController,
+                    startDestination = NavigationItem.Home.route,
+                    modifier = Modifier.padding(innerPadding),
+                ) {
+                    composable(NavigationItem.Home.route) {
+                        HomeScreen(
+                            onTransactionClick = { transaction ->
+                                // TODO: Open transaction edit dialog
                             },
-                            colors =
-                                NavigationBarItemDefaults.colors(
-                                    selectedIconColor = LightColors.Primary,
-                                    selectedTextColor = LightColors.Primary,
-                                    unselectedIconColor = LightColors.MutedForeground,
-                                    unselectedTextColor = LightColors.MutedForeground,
-                                    indicatorColor = LightColors.Primary.copy(alpha = 0.1f),
-                                ),
+                            onSeeAllClick = {
+                                navController.navigate(NavigationItem.Transactions.route)
+                            },
+                            onLinkClick = onOpenUrl,
+                            onThemeChange = { newTheme ->
+                                settingsViewModel.setTheme(newTheme)
+                            },
                         )
                     }
-                }
-            },
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = NavigationItem.Home.route,
-                modifier = Modifier.padding(innerPadding),
-            ) {
-                composable(NavigationItem.Home.route) {
-                    HomeScreen(
-                        onTransactionClick = { transaction ->
-                            // TODO: Open transaction edit dialog
-                        },
-                        onSeeAllClick = {
-                            navController.navigate(NavigationItem.Transactions.route)
-                        },
-                        onLinkClick = onOpenUrl,
-                    )
-                }
 
-                composable(NavigationItem.Transactions.route) {
-                    TransactionsScreen()
-                }
+                    composable(NavigationItem.Transactions.route) {
+                        TransactionsScreen()
+                    }
 
-                composable(NavigationItem.Settings.route) {
-                    SettingsScreen()
+                    composable(NavigationItem.Settings.route) {
+                        SettingsScreen()
+                    }
                 }
             }
         }

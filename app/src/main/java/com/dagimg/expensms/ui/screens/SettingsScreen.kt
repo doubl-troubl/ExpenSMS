@@ -79,7 +79,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Email,
                         contentDescription = "SMS",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "SMS Access",
@@ -97,8 +97,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         },
                         colors =
                             SwitchDefaults.colors(
-                                checkedThumbColor = LightColors.Primary,
-                                checkedTrackColor = LightColors.Primary.copy(alpha = 0.3f),
+                                checkedThumbColor = AppColors.Primary,
+                                checkedTrackColor = AppColors.Primary.copy(alpha = 0.3f),
                             ),
                     )
                 },
@@ -110,7 +110,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Notifications,
                         contentDescription = "Notifications",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "Notifications",
@@ -123,8 +123,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         },
                         colors =
                             SwitchDefaults.colors(
-                                checkedThumbColor = LightColors.Primary,
-                                checkedTrackColor = LightColors.Primary.copy(alpha = 0.3f),
+                                checkedThumbColor = AppColors.Primary,
+                                checkedTrackColor = AppColors.Primary.copy(alpha = 0.3f),
                             ),
                     )
                 },
@@ -136,7 +136,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Lock,
                         contentDescription = "Biometric",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "Biometric Lock",
@@ -163,8 +163,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         },
                         colors =
                             SwitchDefaults.colors(
-                                checkedThumbColor = LightColors.Primary,
-                                checkedTrackColor = LightColors.Primary.copy(alpha = 0.3f),
+                                checkedThumbColor = AppColors.Primary,
+                                checkedTrackColor = AppColors.Primary.copy(alpha = 0.3f),
                             ),
                     )
                 },
@@ -178,7 +178,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Save,
                         contentDescription = "Export",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "Export Data",
@@ -193,7 +193,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
                         contentDescription = "Privacy",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "Privacy Policy",
@@ -208,7 +208,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.Help,
                         contentDescription = "Support",
-                        tint = LightColors.Foreground,
+                        tint = AppColors.Foreground,
                     )
                 },
                 title = "Contact Support",
@@ -226,7 +226,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             colors =
                 CardDefaults.cardColors(
-                    containerColor = LightColors.Card,
+                    containerColor = AppColors.Card,
                 ),
         ) {
             Column(
@@ -239,7 +239,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 Text(
                     text = "ExpenSMS v1.0.0",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LightColors.MutedForeground,
+                    color = AppColors.MutedForeground,
                     fontSize = 14.sp,
                 )
 
@@ -248,7 +248,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 Text(
                     text = "Made with care for modern banking",
                     style = MaterialTheme.typography.bodySmall,
-                    color = LightColors.MutedForeground.copy(alpha = 0.7f),
+                    color = AppColors.MutedForeground.copy(alpha = 0.7f),
                     fontSize = 12.sp,
                 )
             }
@@ -264,7 +264,7 @@ private fun ProfileCard() {
         modifier = Modifier.fillMaxWidth(),
         colors =
             CardDefaults.cardColors(
-                containerColor = LightColors.Card,
+                containerColor = AppColors.Card,
             ),
     ) {
         Row(
@@ -308,14 +308,14 @@ private fun ProfileCard() {
                     text = "Alex Thompson",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = LightColors.Foreground,
+                    color = AppColors.Foreground,
                     fontSize = 18.sp,
                 )
 
                 Text(
                     text = "alex.thompson@email.com",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LightColors.MutedForeground,
+                    color = AppColors.MutedForeground,
                     fontSize = 14.sp,
                 )
             }
@@ -333,7 +333,7 @@ private fun SettingsSection(
             text = title,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Medium,
-            color = LightColors.Foreground,
+            color = AppColors.Foreground,
             fontSize = 16.sp,
             modifier = Modifier.padding(bottom = Spacing.sm),
         )
@@ -342,7 +342,7 @@ private fun SettingsSection(
             modifier = Modifier.fillMaxWidth(),
             colors =
                 CardDefaults.cardColors(
-                    containerColor = LightColors.Card,
+                    containerColor = AppColors.Card,
                 ),
         ) {
             Column(

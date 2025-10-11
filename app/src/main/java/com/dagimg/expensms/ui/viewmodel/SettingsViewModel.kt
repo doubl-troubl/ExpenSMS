@@ -30,6 +30,11 @@ class SettingsViewModel(
             .getBiometricEnabled()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val theme =
+        userPreferencesRepository
+            .getTheme()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "light")
+
     fun setSmsPermission(granted: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setSmsPermission(granted)
@@ -45,6 +50,12 @@ class SettingsViewModel(
     fun setBiometric(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setBiometric(enabled)
+        }
+    }
+
+    fun setTheme(theme: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setTheme(theme)
         }
     }
 
