@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.dagimg.expensms.data.biometric.BiometricAuthManager
 import com.dagimg.expensms.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class SettingsViewModel(
     application: Application,
@@ -60,4 +62,16 @@ class SettingsViewModel(
     }
 
     fun canUseBiometric(): Boolean = biometricManager.canAuthenticate()
+
+    // Synchronous method to get biometric preference (blocks until loaded)
+    fun getBiometricEnabledSync(): Boolean =
+        runBlocking {
+            userPreferencesRepository.getBiometricEnabled().first()
+        }
+
+    // Synchronous method to get theme preference (blocks until loaded)
+    fun getThemeSync(): String =
+        runBlocking {
+            userPreferencesRepository.getTheme().first()
+        }
 }

@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +23,7 @@ import com.dagimg.expensms.data.biometric.BiometricAuthManager
 import com.dagimg.expensms.data.repository.TransactionRepository
 import com.dagimg.expensms.ui.navigation.NavigationItem
 import com.dagimg.expensms.ui.navigation.navigationItems
+import com.dagimg.expensms.ui.screens.AuthScreen
 import com.dagimg.expensms.ui.screens.HomeScreen
 import com.dagimg.expensms.ui.screens.SettingsScreen
 import com.dagimg.expensms.ui.screens.TransactionsScreen
@@ -83,63 +83,69 @@ private fun FragmentActivity.ExpenSMSApp(
     val biometricManager = remember { BiometricAuthManager(context) }
     val transactionRepository = remember { TransactionRepository.getInstance(context) }
 
-    // Check if biometric authentication is required
-    val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
-    val currentTheme by settingsViewModel.theme.collectAsState()
-    var isAuthenticated by remember { mutableStateOf(false) }
-    var authenticationChecked by remember { mutableStateOf(false) }
+    // State to track if we've determined the initial screen and theme
+    var initialSetupCompleted by remember { mutableStateOf(false) }
+    var shouldShowAuth by remember { mutableStateOf(false) }
+    var initialAppTheme by remember { mutableStateOf(AppTheme.LIGHT) }
 
-    // Check authentication on app start and when biometric setting changes
-    LaunchedEffect(biometricEnabled) {
-        if (biometricEnabled && biometricManager.canAuthenticate()) {
-            val authenticated = biometricManager.authenticate(this@ExpenSMSApp)
-            isAuthenticated = authenticated
-            if (!authenticated) {
-                // Authentication failed or was cancelled, close the app
-                finish()
-                return@LaunchedEffect
-            }
-        } else {
-            isAuthenticated = true // No biometric required
-        }
-        authenticationChecked = true
+    // Load initial preferences synchronously - prevents flashes and frame skips
+    LaunchedEffect(Unit) {
+        val biometricEnabled = settingsViewModel.getBiometricEnabledSync()
+        val themePreference = settingsViewModel.getThemeSync()
+
+        shouldShowAuth = biometricEnabled && biometricManager.canAuthenticate()
+        initialAppTheme = if (themePreference == "dark") AppTheme.DARK else AppTheme.LIGHT
+        initialSetupCompleted = true
     }
 
-    // Show loading screen while checking authentication
-    if (!authenticationChecked) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+    // Show loading screen until we've loaded initial preferences
+    if (!initialSetupCompleted) {
+        // Use default theme for loading screen
+        CompositionLocalProvider(LocalAppTheme provides AppTheme.LIGHT) {
+            MaterialTheme(
+                typography = AppTypography,
+                colorScheme =
+                    lightColorScheme(
+                        primary =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF030213),
+                        surface = androidx.compose.ui.graphics.Color.White,
+                        background = androidx.compose.ui.graphics.Color.White,
+                        onSurface =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                        onBackground =
+                            androidx.compose.ui.graphics
+                                .Color(0xFF1A1A1A),
+                    ),
             ) {
-                CircularProgressIndicator()
-                Text("Checking authentication...")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
         return
     }
 
-    // If not authenticated and biometric is enabled, this shouldn't happen
-    // because we finish() the activity above, but just in case
-    if (biometricEnabled && !isAuthenticated) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("Authentication required")
-        }
-        return
+    // Now we have the correct initial theme, use it
+    val navController = rememberNavController()
+    val appTheme = initialAppTheme
+
+    val startDestination = if (shouldShowAuth) NavigationItem.Auth.route else NavigationItem.Home.route
+
+    // Update system bars for initial theme
+    LaunchedEffect(initialAppTheme) {
+        onUpdateSystemBars(initialAppTheme == AppTheme.DARK)
     }
 
-    val navController = rememberNavController()
-    val appTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
-
-    // Update system bars when theme changes
-    LaunchedEffect(appTheme) {
-        onUpdateSystemBars(appTheme == AppTheme.DARK)
+    // Also listen for theme changes during runtime
+    val currentTheme by settingsViewModel.theme.collectAsState()
+    LaunchedEffect(currentTheme) {
+        val runtimeTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
+        onUpdateSystemBars(runtimeTheme == AppTheme.DARK)
     }
 
     CompositionLocalProvider(LocalAppTheme provides appTheme) {
@@ -176,87 +182,126 @@ private fun FragmentActivity.ExpenSMSApp(
         ) {
             Scaffold(
                 bottomBar = {
-                    NavigationBar(
-                        containerColor = AppColors.Card,
-                        contentColor = AppColors.Foreground,
-                    ) {
-                        val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        val currentDestination = navBackStackEntry?.destination
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
+                    val currentRoute = currentDestination?.route
 
-                        navigationItems.forEach { item ->
-                            val isSelected =
-                                currentDestination?.hierarchy?.any {
-                                    it.route == item.route
-                                } == true
+                    // Only show bottom navigation when not on Auth screen
+                    if (currentRoute != NavigationItem.Auth.route) {
+                        NavigationBar(
+                            containerColor = AppColors.Card,
+                            contentColor = AppColors.Foreground,
+                        ) {
+                            navigationItems.forEach { item ->
+                                val isSelected =
+                                    currentDestination?.hierarchy?.any {
+                                        it.route == item.route
+                                    } == true
 
-                            NavigationBarItem(
-                                icon = {
-                                    Icon(
-                                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                        contentDescription = item.title,
-                                    )
-                                },
-                                label = {
-                                    Text(
-                                        text = item.title,
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                },
-                                selected = isSelected,
-                                onClick = {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+                                NavigationBarItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                            contentDescription = item.title,
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = item.title,
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    },
+                                    selected = isSelected,
+                                    onClick = {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                colors =
-                                    NavigationBarItemDefaults.colors(
-                                        selectedIconColor = AppColors.Primary,
-                                        selectedTextColor = AppColors.Primary,
-                                        unselectedIconColor = AppColors.MutedForeground,
-                                        unselectedTextColor = AppColors.MutedForeground,
-                                        indicatorColor = AppColors.Primary.copy(alpha = 0.1f),
-                                    ),
-                            )
+                                    },
+                                    colors =
+                                        NavigationBarItemDefaults.colors(
+                                            selectedIconColor = AppColors.Primary,
+                                            selectedTextColor = AppColors.Primary,
+                                            unselectedIconColor = AppColors.MutedForeground,
+                                            unselectedTextColor = AppColors.MutedForeground,
+                                            indicatorColor = AppColors.Primary.copy(alpha = 0.1f),
+                                        ),
+                                )
+                            }
                         }
                     }
                 },
             ) { innerPadding ->
                 NavHost(
                     navController = navController,
-                    startDestination = NavigationItem.Home.route,
-                    modifier = Modifier.padding(innerPadding),
+                    startDestination = startDestination,
+                    modifier = Modifier,
                 ) {
-                    composable(NavigationItem.Home.route) {
-                        HomeScreen(
-                            onTransactionClick = { _transaction ->
-                                // TODO: Open transaction edit dialog
+                    composable(NavigationItem.Auth.route) {
+                        AuthScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onAuthenticationSuccess = {
+                                // Authentication successful, navigate to home
+                                navController.navigate(NavigationItem.Home.route) {
+                                    popUpTo(NavigationItem.Auth.route) { inclusive = true }
+                                }
                             },
-                            onSeeAllClick = {
-                                navController.navigate(NavigationItem.Transactions.route)
-                            },
-                            onLinkClick = onOpenUrl,
-                            onThemeChange = { newTheme ->
-                                settingsViewModel.setTheme(newTheme)
+                            onAuthenticationFailure = {
+                                // Authentication failed, close the app
+                                finish()
                             },
                         )
+
+                        // Trigger authentication when Auth screen is shown
+                        LaunchedEffect(Unit) {
+                            val authenticated = biometricManager.authenticate(this@ExpenSMSApp)
+                            if (authenticated) {
+                                navController.navigate(NavigationItem.Home.route) {
+                                    popUpTo(NavigationItem.Auth.route) { inclusive = true }
+                                }
+                            } else {
+                                // Authentication failed or was cancelled, close the app
+                                finish()
+                            }
+                        }
+                    }
+
+                    composable(NavigationItem.Home.route) {
+                        Box(modifier = Modifier.padding(innerPadding)) {
+                            HomeScreen(
+                                onTransactionClick = { _transaction ->
+                                    // TODO: Open transaction edit dialog
+                                },
+                                onSeeAllClick = {
+                                    navController.navigate(NavigationItem.Transactions.route)
+                                },
+                                onLinkClick = onOpenUrl,
+                                onThemeChange = { newTheme ->
+                                    settingsViewModel.setTheme(newTheme)
+                                },
+                            )
+                        }
                     }
 
                     composable(NavigationItem.Transactions.route) {
-                        TransactionsScreen(
-                            repository = transactionRepository,
-                            onTransactionClick = { _transaction ->
-                                // TODO: Open transaction edit dialog
-                            },
-                            onLinkClick = onOpenUrl,
-                        )
+                        Box(modifier = Modifier.padding(innerPadding)) {
+                            TransactionsScreen(
+                                repository = transactionRepository,
+                                onTransactionClick = { _transaction ->
+                                    // TODO: Open transaction edit dialog
+                                },
+                                onLinkClick = onOpenUrl,
+                            )
+                        }
                     }
 
                     composable(NavigationItem.Settings.route) {
-                        SettingsScreen()
+                        Box(modifier = Modifier.padding(innerPadding)) {
+                            SettingsScreen()
+                        }
                     }
                 }
             }
