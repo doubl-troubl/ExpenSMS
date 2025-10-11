@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -32,6 +33,19 @@ import com.dagimg.expensms.ui.theme.LocalAppTheme
 import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
 
 class MainActivity : FragmentActivity() {
+    fun updateSystemBarsTheme(isDarkTheme: Boolean) {
+        val window = window
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+
+        // Set status bar icons to be dark when app theme is light (for visibility)
+        // Set status bar icons to be light when app theme is dark
+        insetsController.isAppearanceLightStatusBars = !isDarkTheme
+
+        // Set navigation bar icons to be dark when app theme is light (for visibility)
+        // Set navigation bar icons to be light when app theme is dark
+        insetsController.isAppearanceLightNavigationBars = !isDarkTheme
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -39,6 +53,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             ExpenSMSApp(
                 onOpenUrl = { url -> openUrl(url) },
+                onUpdateSystemBars = { isDark -> updateSystemBarsTheme(isDark) },
             )
         }
     }
@@ -55,7 +70,10 @@ class MainActivity : FragmentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
+private fun FragmentActivity.ExpenSMSApp(
+    onOpenUrl: (String) -> Unit,
+    onUpdateSystemBars: (Boolean) -> Unit,
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val settingsViewModel: SettingsViewModel =
         viewModel {
@@ -117,6 +135,11 @@ private fun FragmentActivity.ExpenSMSApp(onOpenUrl: (String) -> Unit) {
 
     val navController = rememberNavController()
     val appTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
+
+    // Update system bars when theme changes
+    LaunchedEffect(appTheme) {
+        onUpdateSystemBars(appTheme == AppTheme.DARK)
+    }
 
     CompositionLocalProvider(LocalAppTheme provides appTheme) {
         MaterialTheme(
