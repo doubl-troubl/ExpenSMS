@@ -79,7 +79,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
     ) {
         try {
             println("DEBUG: Saving transaction: $parsed")
-            val repository = TransactionRepository.instance
+            val repository = TransactionRepository.getInstance(context)
             val transactionId = repository.addTransaction(parsed)
             println("DEBUG: Saved transaction with ID: $transactionId from ${parsed.bankName}")
 

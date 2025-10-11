@@ -1,5 +1,8 @@
 package com.dagimg.expensms.data.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Transaction(
     val id: Long = 0,
     val merchant: String,

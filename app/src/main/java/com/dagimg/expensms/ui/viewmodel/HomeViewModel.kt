@@ -1,5 +1,6 @@
 package com.dagimg.expensms.ui.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dagimg.expensms.data.repository.TransactionRepository
@@ -12,8 +13,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class HomeViewModel : ViewModel() {
-    private val transactionRepository = TransactionRepository.instance
+class HomeViewModel(
+    application: Application,
+) : ViewModel() {
+    private val transactionRepository = TransactionRepository.getInstance(application)
 
     // State for balance cards - derived from transaction data
     val balanceCardsState =

@@ -30,11 +30,15 @@ import com.dagimg.expensms.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel(),
     onTransactionClick: (Transaction) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
     onLinkClick: (String) -> Unit = {},
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val homeViewModel: HomeViewModel =
+        viewModel {
+            HomeViewModel(context.applicationContext as android.app.Application)
+        }
     // Collect state from ViewModel
     val userName by homeViewModel.userName.collectAsState()
     val currentDate by homeViewModel.currentDate.collectAsState()

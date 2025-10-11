@@ -1,35 +1,81 @@
 package com.dagimg.expensms.data.repository
 
+import android.content.Context
+import com.dagimg.expensms.data.database.AppDatabase
+import com.dagimg.expensms.data.database.TransactionEntity
 import com.dagimg.expensms.data.model.Transaction
 import com.dagimg.expensms.data.model.TransactionType
 import com.dagimg.expensms.data.sms.ParsedTransaction
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
 /**
  * Repository for managing transaction data
- * Currently uses in-memory storage, can be replaced with database later
+ * Uses Room database for persistence
  */
-class TransactionRepository {
-    // In-memory storage for transactions
-    private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
-    val transactions: Flow<List<Transaction>> = _transactions.asStateFlow()
+class TransactionRepository(
+    private val context: Context,
+) {
+    private val database = AppDatabase.getInstance(context)
 
-    // Get recent transactions (last 10)
+    // Flow of all transactions from the database
+    val transactions: Flow<List<Transaction>> =
+        database
+            .transactionDao()
+            .getAllTransactions()
+            .map { entities -> entities.map { it.toDomainModel() } }
+
+    // Convert entity to domain model
+    private fun TransactionEntity.toDomainModel(): Transaction =
+        Transaction(
+            id = id,
+            merchant = merchant,
+            amount = amount,
+            type = type,
+            timestamp = timestamp,
+            category = category,
+            bankName = bankName,
+            balanceAfter = balanceAfter,
+            transactionUrl = transactionUrl,
+            note = note,
+            isEdited = isEdited,
+            rawSmsContent = rawSmsContent,
+            smsTimestamp = smsTimestamp,
+            createdAt = createdAt,
+        )
+
+    // Convert domain model to entity
+    private fun Transaction.toEntity(): TransactionEntity =
+        TransactionEntity(
+            id = id,
+            merchant = merchant,
+            amount = amount,
+            type = type,
+            timestamp = timestamp,
+            category = category,
+            bankName = bankName,
+            balanceAfter = balanceAfter,
+            transactionUrl = transactionUrl,
+            note = note,
+            isEdited = isEdited,
+            rawSmsContent = rawSmsContent,
+            smsTimestamp = smsTimestamp,
+            createdAt = createdAt,
+        )
+
+    // Get recent transactions (last 10) - using DAO flow
     val recentTransactions: Flow<List<Transaction>> =
-        transactions.map { transactions ->
-            transactions.sortedByDescending { it.timestamp }.take(10)
-        }
+        database
+            .transactionDao()
+            .getRecentTransactions()
+            .map { entities -> entities.map { it.toDomainModel() } }
 
     // Get all transactions for a specific bank
     fun getTransactionsForBank(bankName: String): Flow<List<Transaction>> =
-        transactions.map { transactions ->
-            transactions
-                .filter { it.bankName == bankName }
-                .sortedByDescending { it.timestamp }
-        }
+        database
+            .transactionDao()
+            .getTransactionsByBank(bankName)
+            .map { entities -> entities.map { it.toDomainModel() } }
 
     // Add a new transaction from parsed SMS
     suspend fun addTransaction(parsedTransaction: ParsedTransaction): Long {
@@ -52,69 +98,77 @@ class TransactionRepository {
 
         println("DEBUG: Created transaction object: $transaction")
 
-        val currentList = _transactions.value
-        println("DEBUG: Current transactions count: ${currentList.size}")
+        val entity = transaction.toEntity()
+        val insertedId = database.transactionDao().insertTransaction(entity)
 
-        _transactions.value = currentList + transaction
+        println("DEBUG: Inserted transaction with ID: $insertedId")
 
-        println("DEBUG: Added transaction, new count: ${currentList.size + 1}")
-
-        return transaction.id
+        return insertedId
     }
 
     // Update an existing transaction
     suspend fun updateTransaction(updatedTransaction: Transaction) {
-        val currentList = _transactions.value
-        _transactions.value =
-            currentList.map { transaction ->
-                if (transaction.id == updatedTransaction.id) updatedTransaction else transaction
-            }
+        val entity = updatedTransaction.toEntity()
+        database.transactionDao().updateTransaction(entity)
+        println("DEBUG: Updated transaction: ${updatedTransaction.id}")
     }
 
     // Delete a transaction
     suspend fun deleteTransaction(transactionId: Long) {
-        val currentList = _transactions.value
-        _transactions.value = currentList.filter { it.id != transactionId }
+        database.transactionDao().deleteTransactionById(transactionId)
+        println("DEBUG: Deleted transaction: $transactionId")
     }
 
     // Get transaction by ID
-    fun getTransactionById(id: Long): Transaction? = _transactions.value.find { it.id == id }
+    suspend fun getTransactionById(id: Long): Transaction? =
+        database.transactionDao().getTransactionById(id)?.toDomainModel()
 
     // Calculate total balance across all banks
     val totalBalance: Flow<Double> =
-        transactions.map { transactions ->
-            // Group by bank and get latest balance for each
-            transactions
-                .groupBy { it.bankName }
-                .mapNotNull { (_, bankTransactions) ->
-                    bankTransactions.maxByOrNull { it.timestamp }?.balanceAfter
-                }.sum()
-        }
+        database
+            .transactionDao()
+            .getAllTransactions()
+            .map { entities ->
+                val transactions = entities.map { it.toDomainModel() }
+                // Group by bank and get latest balance for each
+                transactions
+                    .groupBy { it.bankName }
+                    .mapNotNull { (_, bankTransactions) ->
+                        bankTransactions.maxByOrNull { it.timestamp }?.balanceAfter
+                    }.sum()
+            }
 
     // Get all unique bank names
     val bankNames: Flow<List<String>> =
-        transactions.map { transactions ->
-            transactions.map { it.bankName }.distinct()
-        }
+        database
+            .transactionDao()
+            .getAllTransactions()
+            .map { entities ->
+                entities.map { it.bankName }.distinct()
+            }
 
     // Get balance cards data (for each bank)
     val balanceCards: Flow<List<com.dagimg.expensms.data.model.Bank>> =
-        transactions.map { transactions ->
-            // Group transactions by bank
-            transactions
-                .groupBy { it.bankName }
-                .map { (bankName, bankTransactions) ->
-                    val latestTransaction = bankTransactions.maxByOrNull { it.timestamp }
-                    com.dagimg.expensms.data.model.Bank(
-                        id = bankName.hashCode().toLong(), // Simple ID generation
-                        name = bankName,
-                        displayName = bankName,
-                        colorHex = getBankColor(bankName),
-                        currentBalance = latestTransaction?.balanceAfter ?: 0.0,
-                        lastUpdated = latestTransaction?.timestamp ?: 0L,
-                    )
-                }
-        }
+        database
+            .transactionDao()
+            .getAllTransactions()
+            .map { entities ->
+                val transactions = entities.map { it.toDomainModel() }
+                // Group transactions by bank
+                transactions
+                    .groupBy { it.bankName }
+                    .map { (bankName, bankTransactions) ->
+                        val latestTransaction = bankTransactions.maxByOrNull { it.timestamp }
+                        com.dagimg.expensms.data.model.Bank(
+                            id = bankName.hashCode().toLong(), // Simple ID generation
+                            name = bankName,
+                            displayName = bankName,
+                            colorHex = getBankColor(bankName),
+                            currentBalance = latestTransaction?.balanceAfter ?: 0.0,
+                            lastUpdated = latestTransaction?.timestamp ?: 0L,
+                        )
+                    }
+            }
 
     private fun generateId(): Long = System.currentTimeMillis()
 
@@ -190,7 +244,12 @@ class TransactionRepository {
         }
 
     companion object {
-        // Singleton instance for in-memory storage
-        val instance by lazy { TransactionRepository() }
+        // Singleton instance - will be initialized with context
+        private var instance: TransactionRepository? = null
+
+        fun getInstance(context: Context): TransactionRepository =
+            instance ?: TransactionRepository(context.applicationContext).also {
+                instance = it
+            }
     }
 }

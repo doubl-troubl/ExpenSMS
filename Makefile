@@ -9,6 +9,9 @@ LOG_TAG := ExpensSMS
 WAIT_TIME := 2
 USE_DEBUGGER := 1
 
+compile:
+	$(GRADLE_WRAPPER) compileDebugKotlin
+
 build:
 	$(GRADLE_WRAPPER) assembleDebug
 
