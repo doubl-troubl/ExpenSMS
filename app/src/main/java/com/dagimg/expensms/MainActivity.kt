@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
@@ -83,69 +82,21 @@ private fun FragmentActivity.ExpenSMSApp(
     val biometricManager = remember { BiometricAuthManager(context) }
     val transactionRepository = remember { TransactionRepository.getInstance(context) }
 
-    // State to track if we've determined the initial screen and theme
-    var initialSetupCompleted by remember { mutableStateOf(false) }
-    var shouldShowAuth by remember { mutableStateOf(false) }
-    var initialAppTheme by remember { mutableStateOf(AppTheme.LIGHT) }
+    // Load initial preferences synchronously to determine start destination
+    val biometricEnabled = settingsViewModel.getBiometricEnabledSync()
+    val shouldShowAuth = biometricEnabled && biometricManager.canAuthenticate()
 
-    // Load initial preferences synchronously - prevents flashes and frame skips
-    LaunchedEffect(Unit) {
-        val biometricEnabled = settingsViewModel.getBiometricEnabledSync()
-        val themePreference = settingsViewModel.getThemeSync()
-
-        shouldShowAuth = biometricEnabled && biometricManager.canAuthenticate()
-        initialAppTheme = if (themePreference == "dark") AppTheme.DARK else AppTheme.LIGHT
-        initialSetupCompleted = true
-    }
-
-    // Show loading screen until we've loaded initial preferences
-    if (!initialSetupCompleted) {
-        // Use default theme for loading screen
-        CompositionLocalProvider(LocalAppTheme provides AppTheme.LIGHT) {
-            MaterialTheme(
-                typography = AppTypography,
-                colorScheme =
-                    lightColorScheme(
-                        primary =
-                            androidx.compose.ui.graphics
-                                .Color(0xFF030213),
-                        surface = androidx.compose.ui.graphics.Color.White,
-                        background = androidx.compose.ui.graphics.Color.White,
-                        onSurface =
-                            androidx.compose.ui.graphics
-                                .Color(0xFF1A1A1A),
-                        onBackground =
-                            androidx.compose.ui.graphics
-                                .Color(0xFF1A1A1A),
-                    ),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-        }
-        return
-    }
-
-    // Now we have the correct initial theme, use it
     val navController = rememberNavController()
-    val appTheme = initialAppTheme
+
+    // Get current theme reactively
+    val currentTheme by settingsViewModel.theme.collectAsState()
+    val appTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
 
     val startDestination = if (shouldShowAuth) NavigationItem.Auth.route else NavigationItem.Home.route
 
-    // Update system bars for initial theme
-    LaunchedEffect(initialAppTheme) {
-        onUpdateSystemBars(initialAppTheme == AppTheme.DARK)
-    }
-
-    // Also listen for theme changes during runtime
-    val currentTheme by settingsViewModel.theme.collectAsState()
-    LaunchedEffect(currentTheme) {
-        val runtimeTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
-        onUpdateSystemBars(runtimeTheme == AppTheme.DARK)
+    // Update system bars when theme changes
+    LaunchedEffect(appTheme) {
+        onUpdateSystemBars(appTheme == AppTheme.DARK)
     }
 
     CompositionLocalProvider(LocalAppTheme provides appTheme) {
