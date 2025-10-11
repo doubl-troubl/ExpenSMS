@@ -44,10 +44,19 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val activity = context as? FragmentActivity
     val coroutineScope = rememberCoroutineScope()
 
-    // Collect state from ViewModel
-    val smsPermissionGranted by settingsViewModel.smsPermissionGranted.collectAsState()
-    val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
-    val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
+    // Get initial values synchronously to prevent toggle animation from defaults
+    val initialSmsPermissionGranted by remember { mutableStateOf(settingsViewModel.getSmsPermissionGrantedSync()) }
+    val initialNotificationsEnabled by remember { mutableStateOf(settingsViewModel.getNotificationsEnabledSync()) }
+    val initialBiometricEnabled by remember { mutableStateOf(settingsViewModel.getBiometricEnabledSync()) }
+
+    // Collect state from ViewModel (these will update reactively after initial load)
+    val smsPermissionGranted by settingsViewModel.smsPermissionGranted.collectAsState(
+        initial = initialSmsPermissionGranted,
+    )
+    val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState(
+        initial = initialNotificationsEnabled,
+    )
+    val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState(initial = initialBiometricEnabled)
 
     val smsPermissionLauncher =
         rememberSmsPermissionLauncher(

@@ -74,4 +74,15 @@ class SettingsViewModel(
         runBlocking {
             userPreferencesRepository.getTheme().first()
         }
+
+    // Synchronous methods for all settings (blocks until loaded)
+    fun getSmsPermissionGrantedSync(): Boolean =
+        runBlocking {
+            userPreferencesRepository.getSmsPermissionGranted().first()
+        }
+
+    fun getNotificationsEnabledSync(): Boolean =
+        runBlocking {
+            userPreferencesRepository.getNotificationsEnabled().first()
+        }
 }
