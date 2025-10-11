@@ -58,6 +58,7 @@ fun HomeScreen(
     val totalBalance by homeViewModel.totalBalance.collectAsState()
     val banks by homeViewModel.balanceCardsState.collectAsState()
     val recentTransactions by homeViewModel.recentTransactionsState.collectAsState()
+    val balanceVisible by homeViewModel.balanceVisible.collectAsState()
 
     // Create list of cards (Total + Individual banks)
     val allCards =
@@ -100,6 +101,8 @@ fun HomeScreen(
             BalanceCardsSection(
                 cards = allCards,
                 pagerState = pagerState,
+                balanceVisible = balanceVisible,
+                onToggleBalanceVisibility = { homeViewModel.toggleBalanceVisibility() },
             )
         }
 
@@ -197,6 +200,8 @@ private fun HomeHeader(
 private fun BalanceCardsSection(
     cards: List<Bank>,
     pagerState: PagerState,
+    balanceVisible: Boolean,
+    onToggleBalanceVisibility: () -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
@@ -210,10 +215,18 @@ private fun BalanceCardsSection(
             val card = cards[page]
             if (page == 0) {
                 // Total Balance Card
-                TotalBalanceCard(totalBalance = card.currentBalance)
+                TotalBalanceCard(
+                    totalBalance = card.currentBalance,
+                    balanceVisible = balanceVisible,
+                    onToggleBalanceVisibility = onToggleBalanceVisibility,
+                )
             } else {
                 // Individual Bank Card
-                BalanceCard(bank = card)
+                BalanceCard(
+                    bank = card,
+                    balanceVisible = balanceVisible,
+                    onToggleBalanceVisibility = onToggleBalanceVisibility,
+                )
             }
         }
 

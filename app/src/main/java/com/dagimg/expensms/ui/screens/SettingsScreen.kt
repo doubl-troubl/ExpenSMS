@@ -70,6 +70,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         initial = initialNotificationsEnabled,
     )
     val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState(initial = initialBiometricEnabled)
+    val userName by settingsViewModel.userName.collectAsState(initial = "User")
 
     // State for notification permissions (checked when screen is shown)
     var notificationPermissionGranted by remember { mutableStateOf(initialNotificationPermissionGranted) }
@@ -155,7 +156,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(Spacing.lg))
 
         // Profile Card
-        ProfileCard()
+        ProfileCard(userName = userName)
 
         // Permissions & Security Section
         SettingsSection(title = "Permissions & Security") {
@@ -434,7 +435,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             },
             text = {
                 Text(
-                    text = "This will permanently delete all transactions and reset the app. This action cannot be undone. Are you sure you want to continue?",
+                    text =
+                        "This will permanently delete all transactions and reset the app. " +
+                            "This action cannot be undone. Are you sure you want to continue?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppColors.MutedForeground,
                 )
@@ -468,7 +471,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProfileCard() {
+private fun ProfileCard(userName: String) {
+    val displayName = if (userName.isBlank() || userName == "User") "User" else userName
+    val initial = displayName.firstOrNull()?.uppercaseChar() ?: 'U'
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors =
@@ -502,7 +508,7 @@ private fun ProfileCard() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "A",
+                    text = initial.toString(),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
@@ -514,18 +520,11 @@ private fun ProfileCard() {
             // User Info
             Column {
                 Text(
-                    text = "Alex Thompson",
+                    text = displayName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppColors.Foreground,
                     fontSize = 18.sp,
-                )
-
-                Text(
-                    text = "alex.thompson@email.com",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.MutedForeground,
-                    fontSize = 14.sp,
                 )
             }
         }

@@ -67,7 +67,8 @@ class HistoricalSmsParser(
 
                 var successCount = 0
                 val processedMessages = mutableSetOf<String>() // To avoid processing the same SMS multiple times
-                val processedTransactions = mutableListOf<ParsedTransaction>() // Track transactions saved in this session
+                val processedTransactions = mutableListOf<ParsedTransaction>()
+                // Track transactions saved in this session
 
                 for (smsData in smsMessages) {
                     try {

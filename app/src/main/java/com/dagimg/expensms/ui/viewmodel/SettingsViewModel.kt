@@ -39,6 +39,11 @@ class SettingsViewModel(
             .getBiometricEnabled()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val userName =
+        userPreferencesRepository
+            .getUserName()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "User")
+
     val theme =
         userPreferencesRepository
             .getTheme()

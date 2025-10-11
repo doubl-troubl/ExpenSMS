@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +27,8 @@ import java.util.*
 @Composable
 fun BalanceCard(
     bank: Bank,
+    balanceVisible: Boolean,
+    onToggleBalanceVisibility: () -> Unit,
     isTotal: Boolean = false,
     modifier: Modifier = Modifier,
     _onClick: () -> Unit = {},
@@ -90,7 +95,7 @@ fun BalanceCard(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = formatCurrency(bank.currentBalance),
+                text = if (balanceVisible) formatCurrency(bank.currentBalance) else "••••••",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -105,20 +110,36 @@ fun BalanceCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = if (isTotal) "All Accounts" else "Account Balance",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp,
-                )
-
-                if (!isTotal) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
-                        text = "****${bank.id}",
+                        text = if (isTotal) "All Accounts" else "Account Balance",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 11.sp,
-                        letterSpacing = 1.sp,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp,
+                    )
+
+                    if (!isTotal) {
+                        Text(
+                            text = "****${bank.id}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            letterSpacing = 1.sp,
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onToggleBalanceVisibility,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = if (balanceVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = if (balanceVisible) "Hide balance" else "Show balance",
+                        tint = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -129,6 +150,8 @@ fun BalanceCard(
 @Composable
 fun TotalBalanceCard(
     totalBalance: Double,
+    balanceVisible: Boolean,
+    onToggleBalanceVisibility: () -> Unit,
     modifier: Modifier = Modifier,
     _onClick: () -> Unit = {},
 ) {
@@ -187,7 +210,7 @@ fun TotalBalanceCard(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = formatCurrency(totalBalance),
+                text = if (balanceVisible) formatCurrency(totalBalance) else "••••••",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -197,12 +220,30 @@ fun TotalBalanceCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "All Accounts",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 12.sp,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "All Accounts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 12.sp,
+                )
+
+                IconButton(
+                    onClick = onToggleBalanceVisibility,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = if (balanceVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = if (balanceVisible) "Hide balance" else "Show balance",
+                        tint = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
         }
     }
 }

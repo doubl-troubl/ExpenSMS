@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,6 +42,12 @@ class HomeViewModel(
             .getUserName()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "User")
 
+    // State for balance visibility (eye icon toggle)
+    val balanceVisible: StateFlow<Boolean> =
+        userPreferencesRepository
+            .getBalanceVisible()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
     // State for current date
     private val _currentDate = MutableStateFlow("")
     val currentDate: StateFlow<String> = _currentDate.asStateFlow()
@@ -55,6 +62,14 @@ class HomeViewModel(
         _currentDate.value = dateFormat.format(Date())
     }
 
+    fun toggleBalanceVisibility() {
+        viewModelScope.launch {
+            val currentVisible = balanceVisible.value
+            userPreferencesRepository.setBalanceVisible(!currentVisible)
+            println("DEBUG: Balance visibility toggled to: ${!currentVisible}")
+        }
+    }
+
     fun refreshData() {
         println("DEBUG: HomeViewModel.refreshData() called")
         updateCurrentDate()
@@ -65,5 +80,6 @@ class HomeViewModel(
         println("DEBUG: - balanceCardsState: ${balanceCardsState.value.size} cards")
         println("DEBUG: - recentTransactionsState: ${recentTransactionsState.value.size} transactions")
         println("DEBUG: - totalBalance: ${totalBalance.value}")
+        println("DEBUG: - balanceVisible: ${balanceVisible.value}")
     }
 }
