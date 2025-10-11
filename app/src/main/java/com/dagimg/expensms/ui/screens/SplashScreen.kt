@@ -17,10 +17,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dagimg.expensms.R
 import com.dagimg.expensms.ui.theme.AppColors
 import kotlin.math.*
 
@@ -168,10 +170,13 @@ fun SplashScreen(
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    // SMS/Money icon representation
-                    Canvas(modifier = Modifier.size(50.dp)) {
-                        drawSMSIcon(isDark)
-                    }
+                    // Birr currency icon
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_birr),
+                        contentDescription = "Birr currency symbol",
+                        tint = Color.White,
+                        modifier = Modifier.size(50.dp),
+                    )
                 }
             }
 
@@ -314,79 +319,3 @@ private fun DrawScope.drawRotatingRing(isDark: Boolean) {
     )
 }
 
-private fun DrawScope.drawSMSIcon(isDark: Boolean) {
-    val iconColor = if (isDark) Color.White else Color.White.copy(alpha = 0.9f)
-    val strokeWidth = 3.dp.toPx()
-
-    // Draw message bubble
-    val bubbleSize = size.width * 0.6f
-    val bubbleOffset =
-        Offset(
-            (size.width - bubbleSize) / 2,
-            (size.height - bubbleSize) / 2 - bubbleSize * 0.1f,
-        )
-
-    // Message bubble background
-    drawRoundRect(
-        color = iconColor,
-        topLeft = bubbleOffset,
-        size =
-            androidx.compose.ui.geometry
-                .Size(bubbleSize, bubbleSize * 0.7f),
-        cornerRadius =
-            androidx.compose.ui.geometry
-                .CornerRadius(8.dp.toPx()),
-        style =
-            androidx.compose.ui.graphics.drawscope
-                .Stroke(width = strokeWidth, cap = StrokeCap.Round),
-    )
-
-    // Message lines
-    val lineY1 = bubbleOffset.y + bubbleSize * 0.25f
-    val lineY2 = bubbleOffset.y + bubbleSize * 0.45f
-    val lineStartX = bubbleOffset.x + bubbleSize * 0.2f
-    val lineEndX = bubbleOffset.x + bubbleSize * 0.8f
-
-    drawLine(
-        color = iconColor,
-        start = Offset(lineStartX, lineY1),
-        end = Offset(lineEndX, lineY1),
-        strokeWidth = strokeWidth - 1.dp.toPx(),
-        cap = StrokeCap.Round,
-    )
-
-    drawLine(
-        color = iconColor,
-        start = Offset(lineStartX, lineY2),
-        end = Offset(lineStartX + bubbleSize * 0.4f, lineY2),
-        strokeWidth = strokeWidth - 1.dp.toPx(),
-        cap = StrokeCap.Round,
-    )
-
-    // Dollar sign overlay
-    val dollarSize = bubbleSize * 0.3f
-    val dollarOffset =
-        Offset(
-            bubbleOffset.x + bubbleSize * 0.6f,
-            bubbleOffset.y + bubbleSize * 0.5f,
-        )
-
-    // Dollar sign circle
-    drawCircle(
-        color = iconColor,
-        radius = dollarSize / 2,
-        center = dollarOffset,
-        style =
-            androidx.compose.ui.graphics.drawscope
-                .Stroke(width = strokeWidth - 1.dp.toPx()),
-    )
-
-    // Dollar sign "S"
-    drawLine(
-        color = iconColor,
-        start = Offset(dollarOffset.x - dollarSize * 0.15f, dollarOffset.y - dollarSize * 0.1f),
-        end = Offset(dollarOffset.x + dollarSize * 0.15f, dollarOffset.y + dollarSize * 0.1f),
-        strokeWidth = strokeWidth - 1.dp.toPx(),
-        cap = StrokeCap.Round,
-    )
-}
