@@ -16,6 +16,13 @@ sealed class NavigationItem(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
 ) {
+    object Splash : NavigationItem(
+        route = "splash",
+        title = "Splash",
+        selectedIcon = Icons.Filled.Lock, // This won't be used in bottom nav
+        unselectedIcon = Icons.Filled.Lock, // This won't be used in bottom nav
+    )
+
     object Auth : NavigationItem(
         route = "auth",
         title = "Authentication",

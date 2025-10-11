@@ -9,8 +9,16 @@ LOG_TAG := ExpensSMS
 WAIT_TIME := 2
 USE_DEBUGGER := 1
 
+ktlint:
+	ktlint --format
+
 compile:
 	$(GRADLE_WRAPPER) compileDebugKotlin
+
+lint: ktlint
+
+release:
+	$(GRADLE_WRAPPER) assembleRelease
 
 build:
 	$(GRADLE_WRAPPER) assembleDebug

@@ -33,6 +33,22 @@ android {
     namespace = "com.dagimg.expensms"
     compileSdk = 36
 
+    // Signing configuration for release builds
+    signingConfigs {
+        create("release") {
+            storeFile = file("../expensms.jks")
+            storePassword = project.properties["STORE_PASSWORD"]?.toString()
+                ?: System.getenv("STORE_PASSWORD")
+                ?: "default_password"
+            keyAlias = project.properties["KEY_ALIAS"]?.toString()
+                ?: System.getenv("KEY_ALIAS")
+                ?: "default_alias"
+            keyPassword = project.properties["KEY_PASSWORD"]?.toString()
+                ?: System.getenv("KEY_PASSWORD")
+                ?: "default_password"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.dagimg.expensms"
         minSdk = 24
@@ -49,6 +65,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs["release"]
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

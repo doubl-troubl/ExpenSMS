@@ -25,12 +25,14 @@ import com.dagimg.expensms.ui.navigation.navigationItems
 import com.dagimg.expensms.ui.screens.AuthScreen
 import com.dagimg.expensms.ui.screens.HomeScreen
 import com.dagimg.expensms.ui.screens.SettingsScreen
+import com.dagimg.expensms.ui.screens.SplashScreen
 import com.dagimg.expensms.ui.screens.TransactionsScreen
 import com.dagimg.expensms.ui.theme.AppColors
 import com.dagimg.expensms.ui.theme.AppTheme
 import com.dagimg.expensms.ui.theme.AppTypography
 import com.dagimg.expensms.ui.theme.LocalAppTheme
 import com.dagimg.expensms.ui.viewmodel.SettingsViewModel
+import com.dagimg.expensms.ui.viewmodel.SplashViewModel
 
 class MainActivity : FragmentActivity() {
     fun updateSystemBarsTheme(isDarkTheme: Boolean) {
@@ -79,12 +81,12 @@ private fun FragmentActivity.ExpenSMSApp(
         viewModel {
             SettingsViewModel(context.applicationContext as android.app.Application)
         }
+    val splashViewModel: SplashViewModel =
+        viewModel {
+            SplashViewModel(context.applicationContext as android.app.Application)
+        }
     val biometricManager = remember { BiometricAuthManager(context) }
     val transactionRepository = remember { TransactionRepository.getInstance(context) }
-
-    // Load initial preferences synchronously to determine start destination
-    val biometricEnabled = settingsViewModel.getBiometricEnabledSync()
-    val shouldShowAuth = biometricEnabled && biometricManager.canAuthenticate()
 
     val navController = rememberNavController()
 
@@ -92,7 +94,10 @@ private fun FragmentActivity.ExpenSMSApp(
     val currentTheme by settingsViewModel.theme.collectAsState()
     val appTheme = if (currentTheme == "dark") AppTheme.DARK else AppTheme.LIGHT
 
-    val startDestination = if (shouldShowAuth) NavigationItem.Auth.route else NavigationItem.Home.route
+    // Get splash state
+    val splashState by splashViewModel.state.collectAsState()
+
+    val startDestination = NavigationItem.Splash.route
 
     // Update system bars when theme changes
     LaunchedEffect(appTheme) {
@@ -137,8 +142,8 @@ private fun FragmentActivity.ExpenSMSApp(
                     val currentDestination = navBackStackEntry?.destination
                     val currentRoute = currentDestination?.route
 
-                    // Only show bottom navigation when not on Auth screen
-                    if (currentRoute != NavigationItem.Auth.route) {
+                    // Only show bottom navigation on main app screens (not on Splash or Auth)
+                    if (currentRoute != NavigationItem.Splash.route && currentRoute != NavigationItem.Auth.route) {
                         NavigationBar(
                             containerColor = AppColors.Card,
                             contentColor = AppColors.Foreground,
@@ -191,7 +196,44 @@ private fun FragmentActivity.ExpenSMSApp(
                     startDestination = startDestination,
                     modifier = Modifier,
                 ) {
+                    composable(NavigationItem.Splash.route) {
+                        // Splash screen takes full screen (no padding)
+                        SplashScreen(
+                            isLoading = splashState.isLoading,
+                            loadingMessage = splashState.loadingMessage,
+                            onAnimationComplete = {
+                                if (splashState.isComplete) {
+                                    val destination =
+                                        if (splashState.shouldShowAuth) {
+                                            NavigationItem.Auth.route
+                                        } else {
+                                            NavigationItem.Home.route
+                                        }
+                                    navController.navigate(destination) {
+                                        popUpTo(NavigationItem.Splash.route) { inclusive = true }
+                                    }
+                                }
+                            },
+                        )
+
+                        // Auto-navigate when splash is complete
+                        LaunchedEffect(splashState.isComplete) {
+                            if (splashState.isComplete) {
+                                val destination =
+                                    if (splashState.shouldShowAuth) {
+                                        NavigationItem.Auth.route
+                                    } else {
+                                        NavigationItem.Home.route
+                                    }
+                                navController.navigate(destination) {
+                                    popUpTo(NavigationItem.Splash.route) { inclusive = true }
+                                }
+                            }
+                        }
+                    }
+
                     composable(NavigationItem.Auth.route) {
+                        // Auth screen takes full screen (no padding)
                         AuthScreen(
                             modifier = Modifier.fillMaxSize(),
                             onAuthenticationSuccess = {
