@@ -12,13 +12,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dagimg.expensms.data.model.Transaction
 import com.dagimg.expensms.data.repository.TransactionRepository
+import com.dagimg.expensms.ui.components.TransactionEditDialog
 import com.dagimg.expensms.ui.components.TransactionItem
 import com.dagimg.expensms.ui.theme.AppColors
 import com.dagimg.expensms.ui.theme.Spacing
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +31,13 @@ fun TransactionsScreen(
     onTransactionClick: (Transaction) -> Unit = {},
     onLinkClick: (String) -> Unit = {},
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Dialog state
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
+
     val transactions by repository.transactions.collectAsState(initial = emptyList())
     val availableBanks by repository.availableBanks.collectAsState(initial = emptyList())
 
@@ -252,12 +262,39 @@ fun TransactionsScreen(
                 items(filteredTransactions) { transaction ->
                     TransactionItem(
                         transaction = transaction,
-                        onTransactionClick = onTransactionClick,
+                        onTransactionClick = { clickedTransaction ->
+                            selectedTransaction = clickedTransaction
+                            showEditDialog = true
+                        },
                         onLinkClick = onLinkClick,
                     )
                 }
             }
         }
+    }
+
+    // Transaction Edit Dialog
+    if (showEditDialog && selectedTransaction != null) {
+        TransactionEditDialog(
+            transaction = selectedTransaction!!,
+            onDismiss = {
+                showEditDialog = false
+                selectedTransaction = null
+            },
+            onSave = { updatedTransaction ->
+                scope.launch {
+                    try {
+                        repository.updateTransaction(updatedTransaction)
+                        showEditDialog = false
+                        selectedTransaction = null
+                    } catch (e: Exception) {
+                        // Handle error - could show a snackbar
+                        showEditDialog = false
+                        selectedTransaction = null
+                    }
+                }
+            },
+        )
     }
 }
 

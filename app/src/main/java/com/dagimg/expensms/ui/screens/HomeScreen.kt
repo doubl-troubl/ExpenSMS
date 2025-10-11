@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,12 +21,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dagimg.expensms.data.model.Bank
 import com.dagimg.expensms.data.model.Transaction
+import com.dagimg.expensms.data.repository.TransactionRepository
 import com.dagimg.expensms.ui.components.BalanceCard
 import com.dagimg.expensms.ui.components.ThemeToggleButton
 import com.dagimg.expensms.ui.components.TotalBalanceCard
+import com.dagimg.expensms.ui.components.TransactionEditDialog
 import com.dagimg.expensms.ui.components.TransactionItem
 import com.dagimg.expensms.ui.theme.*
 import com.dagimg.expensms.ui.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,11 +40,18 @@ fun HomeScreen(
     onLinkClick: (String) -> Unit = {},
     onThemeChange: (String) -> Unit = {},
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val homeViewModel: HomeViewModel =
         viewModel {
             HomeViewModel(context.applicationContext as android.app.Application)
         }
+    val transactionRepository = remember { TransactionRepository.getInstance(context) }
+
+    // Dialog state
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
+
     // Collect state from ViewModel
     val userName by homeViewModel.userName.collectAsState()
     val currentDate by homeViewModel.currentDate.collectAsState()
@@ -104,7 +115,10 @@ fun HomeScreen(
         items(recentTransactions) { transaction ->
             TransactionItem(
                 transaction = transaction,
-                onTransactionClick = onTransactionClick,
+                onTransactionClick = { clickedTransaction ->
+                    selectedTransaction = clickedTransaction
+                    showEditDialog = true
+                },
                 onLinkClick = onLinkClick,
                 modifier = Modifier.padding(horizontal = Spacing.lg),
             )
@@ -113,6 +127,30 @@ fun HomeScreen(
         item {
             Spacer(modifier = Modifier.height(Spacing.xxl))
         }
+    }
+
+    // Transaction Edit Dialog
+    if (showEditDialog && selectedTransaction != null) {
+        TransactionEditDialog(
+            transaction = selectedTransaction!!,
+            onDismiss = {
+                showEditDialog = false
+                selectedTransaction = null
+            },
+            onSave = { updatedTransaction ->
+                scope.launch {
+                    try {
+                        transactionRepository.updateTransaction(updatedTransaction)
+                        showEditDialog = false
+                        selectedTransaction = null
+                    } catch (e: Exception) {
+                        // Handle error - could show a snackbar
+                        showEditDialog = false
+                        selectedTransaction = null
+                    }
+                }
+            },
+        )
     }
 }
 
